@@ -1,0 +1,17 @@
+data:
+  H: 40
+  W: 40
+  channels: 3
+training:
+  optimization:
+    optimizer_name: Adam # which optimizer to use during training
+    Adam:
+      betas:
+        -0.9
+        0.99
+      lr: 1e-3
+    SGD:
+      momentum: 0.9
+      lr: 1e-4
+
+VAE:
