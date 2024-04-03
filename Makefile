@@ -29,3 +29,9 @@ clean:
 	find . -type d -name "__pycache__" -delete
 
 
+#################################################################################
+# PROJECT RULES                                                                 #
+#################################################################################
+
+download:
+	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/data_utils/get_data.py
