@@ -33,15 +33,24 @@ def download_data(dataset_urls, data_raw_path):
             print(f"File {filename} already exists, skipping download") 
 
 
-def resize_image_with_white_background(filepath, new_path, size):
+def resize_image_with_white_background(filepath, new_path, size, padding_ratio=0.01):
     # Load the image
-    img = Image.open(filepath)
-
-    # Resize the image
-    img_resized = img.resize((size, size))
+    img = Image.open(filepath).convert("RGBA")
     
-    # Save the image
-    img_resized.save(new_path, 'PNG')
+    # Resize the cropped image using LANCZOS resampling for high quality
+    img_resized = img.resize((size, size), Image.Resampling.LANCZOS)
+    
+    # Create a new white background image
+    white_bg = Image.new('RGBA', (size, size), 'WHITE')
+
+    # Remove alpha from the resized image by compositing it over a white background
+    alpha_composite = Image.alpha_composite(white_bg, img_resized)
+    
+    # Convert back to RGB to discard alpha channel
+    final_img = alpha_composite.convert("RGB")
+
+    # Save the image with a white background
+    final_img.save(new_path, 'PNG')
 
 def process_subfolder(folderpath, new_folderpath, size):
     # Check and create new folder if it doesn't exist

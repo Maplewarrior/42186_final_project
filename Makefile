@@ -33,5 +33,9 @@ clean:
 # PROJECT RULES                                                                 #
 #################################################################################
 
-download:
+get-data:
 	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/data_utils/get_data.py
+
+
+test-dataloader:
+	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/data_utils/dataloader.py
