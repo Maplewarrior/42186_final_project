@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "02471_final_project"
+version = "0.0.1"
+authors = [
+  { name="Andreas Fiehn", email="s204125@dtu.dk" },
+  { name="Alexander Gosden", email="s204209@dtu.dk"},
+  { name="Michael Harborg", email="s204138@dtu.dk" },
+  { name="Matthias Ornolfsson", email="s163990@dtu.dk"}
+]
+description = "02471 final project"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/Maplewarrior/02471_final_project"
+Issues = "https://github.com/Maplewarrior/02471_final_project/issues"
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.ruff]
+line-length = 120
