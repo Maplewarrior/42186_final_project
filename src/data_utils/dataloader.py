@@ -3,8 +3,11 @@ from PIL import Image
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
 
+def divide_by_255(x):
+    return x / 255.0
+
 class PokemonDataset(Dataset):
-    def __init__(self, root_dir, labels=None, games=None):
+    def __init__(self, root_dir, labels=None, games=None, transform=None):
         """
         Args:
             root_dir (string): Directory with all the images.
@@ -14,10 +17,13 @@ class PokemonDataset(Dataset):
         self.root_dir = root_dir
         self.labels = labels if labels is not None else ['front', 'back', 'shiny']
         self.games = games  # None means include all games
-        self.transform = transforms.Compose([
-            # Add more transforms here as needed
-            transforms.ToTensor(),
-        ])
+        self.transform = transform
+
+        if transform is None:
+            self.transform = transforms.Compose([
+                # Add more transforms here as needed
+                transforms.ToTensor()
+            ])
         self.image_paths = []
         self.image_labels = []
 
@@ -47,12 +53,13 @@ class PokemonDataset(Dataset):
         label = self.image_labels[idx]
         image = Image.open(img_path).convert('RGB')
         image = self.transform(image)
-        image = image / 255
         return image, label
 
 
 
 if __name__ == '__main__':
+
+    import matplotlib.pyplot as plt
     # Usage
     root_dir = 'data/processed'  
     labels = ['front', 'back', 'shiny'] 
@@ -60,7 +67,13 @@ if __name__ == '__main__':
     games = ["red-blue", "gold", "emerald", "firered-leafgreen", "diamond-pearl", "heartgold-soulsilver", 
              "black-white"]
 
-    pokemon_dataset = PokemonDataset(root_dir, labels, games=games)
+    transform = transforms.Compose([
+                # Add more transforms here as needed
+                transforms.ToTensor(),
+                transforms.Lambda(divide_by_255)
+            ])
+
+    pokemon_dataset = PokemonDataset(root_dir, labels, games=games, transform=transform)
 
     # Create a DataLoader
     dataloader = DataLoader(pokemon_dataset, batch_size=32, shuffle=True)
