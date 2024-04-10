@@ -21,7 +21,6 @@ class PokemonDataset(Dataset):
         self.image_paths = []
         self.image_labels = []
 
- 
         # Traverse the directory structure
         for gen_folder in os.listdir(root_dir):
             gen_path = os.path.join(root_dir, gen_folder)
@@ -48,7 +47,7 @@ class PokemonDataset(Dataset):
         label = self.image_labels[idx]
         image = Image.open(img_path).convert('RGB')
         image = self.transform(image)
-        
+        image = image / 255
         return image, label
 
 

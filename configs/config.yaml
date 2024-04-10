@@ -2,16 +2,19 @@ data:
   H: 40
   W: 40
   channels: 3
+
 training:
+  n_epochs: 20
   optimization:
     optimizer_name: Adam # which optimizer to use during training
     Adam:
       betas:
-        -0.9
-        0.99
-      lr: 1e-3
+        - 0.9
+        - 0.999
+      lr: 0.001
     SGD:
       momentum: 0.9
-      lr: 1e-4
+      lr: 0.001
 
 VAE:
+  D: 512 # dimensionality of the latent space
