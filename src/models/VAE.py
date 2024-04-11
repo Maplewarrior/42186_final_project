@@ -110,42 +110,44 @@ class MultivariateGaussianDecoder(nn.Module):
         self.log_var = nn.Parameter(torch.log(torch.ones(self.H, self.W) * .5), requires_grad=learn_variance)
     
     def __get_decoder_net(self):
-        decoder_net = nn.Sequential(
-                                    nn.Linear(self.D, 1024),
-                                    nn.ReLU(),
-                                    nn.Linear(1024, 2048),
-                                    nn.ReLU(),
-                                    nn.Linear(2048, 2048),
-                                    nn.ReLU(),
-                                    nn.Linear(2048, self.H * self.W * 3),
-                                    nn.Unflatten(-1, (3, self.H, self.W)))
+        # decoder_net = nn.Sequential(
+        #                             nn.Linear(self.D, 1024),
+        #                             nn.ReLU(),
+        #                             nn.Linear(1024, 2048),
+        #                             nn.ReLU(),
+        #                             nn.Linear(2048, 2048),
+        #                             nn.ReLU(),
+        #                             nn.Linear(2048, self.H * self.W * 3),
+        #                             nn.Unflatten(-1, (3, self.H, self.W)))
         
-        # decoder_net_cnn = nn.Sequential(
-        #                                 nn.Linear(self.D, 1024),
-        #                                 Reshape((1024, 1, 1)),
-        #                                 nn.ConvTranspose2d(in_channels=1024, out_channels=512, kernel_size=4, stride=2, padding=0),
-        #                                 nn.ReLU(),
-        #                                 nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=4,stride=2, padding=1),
-        #                                 nn.ReLU(),
-        #                                 nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=4,stride=2, padding=1),
-        #                                 nn.ReLU(),
-        #                                 nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=4,stride=2, padding=2),
-        #                                 nn.ReLU(),
-        #                                 nn.ConvTranspose2d(in_channels=64, out_channels=3, kernel_size=11, stride=1, padding=0),
-        #                                 # nn.ReLU(),
-        #                                 # nn.ConvTranspose2d(in_channels=48, out_channels=1, kernel_size=4,stride=2, padding=1),
+        decoder_net_cnn = nn.Sequential(
+                                        nn.Linear(self.D, 1024),
+                                        Reshape((1024, 1, 1)),
+                                        nn.ConvTranspose2d(in_channels=1024, out_channels=512, kernel_size=4, stride=2, padding=0),
+                                        nn.ReLU(),
+                                        nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=4,stride=2, padding=1),
+                                        nn.ReLU(),
+                                        nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=4,stride=2, padding=1),
+                                        nn.ReLU(),
+                                        nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=4,stride=2, padding=2),
+                                        nn.ReLU(),
+                                        nn.ConvTranspose2d(in_channels=64, out_channels=3, kernel_size=11, stride=1, padding=0),
+                                        nn.Sigmoid()
+                                        )
+                                        # nn.ReLU(),
+                                        # nn.ConvTranspose2d(in_channels=48, out_channels=1, kernel_size=4,stride=2, padding=1),
                                         
         #                             ) # (40-1) * s + k - 2*p
-        decoder_net_cnn = nn.Sequential(nn.Linear(self.D, 256 * (self.H // 8) * (self.H // 8)),
-                                        nn.ReLU(),
-                                        nn.ConvTranspose2d(256, 128, kernel_size=4, stride=2, padding=1),
-                                        nn.ReLU(),
-                                        nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1),
-                                        nn.ReLU(),
-                                        nn.ConvTranspose2d(64, 3, kernel_size=4, stride=2, padding=1),
-                                        nn.Sigmoid()
+        # decoder_net_cnn = nn.Sequential(nn.Linear(self.D, 256 * (self.H // 8) * (self.H // 8)),
+        #                                 nn.ReLU(),
+        #                                 nn.ConvTranspose2d(256, 128, kernel_size=4, stride=2, padding=1),
+        #                                 nn.ReLU(),
+        #                                 nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1),
+        #                                 nn.ReLU(),
+        #                                 nn.ConvTranspose2d(64, 3, kernel_size=4, stride=2, padding=1),
+        #                                 nn.Sigmoid()
                                         
-        )
+        # )
         return decoder_net_cnn
 
     def forward(self, z):

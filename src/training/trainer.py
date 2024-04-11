@@ -3,11 +3,11 @@ from tqdm import tqdm
 import torch.optim as optim
 import torch
 class Trainer:
-    def __init__(self, model, train_loader, config_path: str) -> None:
+    def __init__(self, model, train_loader, config_path: str, device: str) -> None:
         self.model = model
         self.train_loader = train_loader
         self.CFG = load_config(config_path)
-        self.device = ('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device=device
         self.__initialize_training_utils()
     
     def __initialize_training_utils(self):
