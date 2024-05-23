@@ -2,6 +2,8 @@ import os
 from PIL import Image
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
+from src.data_utils.metadata import PokemonMetaData
+
 
 def divide_by_255(x):
     return x / 255.0
@@ -14,6 +16,7 @@ class PokemonDataset(Dataset):
             labels (list): List of subfolder names to be used as labels. E.g., ['front', 'back', 'shiny']
             games (list): List of game names to include. E.g., ['red-blue', 'gold', 'emerald']
         """
+        self.metadata = PokemonMetaData()
         self.root_dir = root_dir
         self.labels = labels if labels is not None else ['front', 'back', 'shiny']
         self.games = games  # None means include all games
@@ -42,8 +45,15 @@ class PokemonDataset(Dataset):
                         if os.path.isdir(label_path):
                             for img_file in os.listdir(label_path):
                                 if img_file.endswith('.png'):
+                                    # pdb.set_trace()
+                                    image_name = img_file.split('.')[0]
+                                    # imagename is digit?
+                                    if not image_name.isdigit() or int(image_name) == 0:
+                                        continue
+
+                                    self.image_labels.append(self.metadata.get_type_by_id(int(image_name)))
                                     self.image_paths.append(os.path.join(label_path, img_file))
-                                    self.image_labels.append(label)
+                                    # self.image_labels.append(label)
 
     def __len__(self):
         return len(self.image_paths)
@@ -99,6 +109,9 @@ if __name__ == '__main__':
 
     import matplotlib.pyplot as plt
 
+
+    # ======================== Pokemon dataset test ========================
+
     # Usage
     root_dir = 'data/processed'  
     labels = ['front', 'back', 'shiny'] 
@@ -123,16 +136,24 @@ if __name__ == '__main__':
         print(images.shape, labels)
         break
 
+    # ======================== Pokemon fusion dataset test ========================
 
+    # Sample usage
+    root_dir = 'data/fusion'
     trans = transforms.Compose([
-        # resize to 64x64
         transforms.Resize((64, 64)),
+        # transforms.RandomHorizontalFlip(p=0.0),  # This line is optional
         transforms.ToTensor()
     ])
 
-    fusion_dataset = PokemonFusionDataset('data/fusion', transform=trans)
+    fusion_dataset = PokemonFusionDataset(root_dir, transform=trans)
+
+    # Create a DataLoader
     dataloader = DataLoader(fusion_dataset, batch_size=4, shuffle=True)
 
+    # Example of iterating over DataLoader
     for images, labels in dataloader:
+        # Process images and labels here
         print(images.shape, labels)
         break
+
