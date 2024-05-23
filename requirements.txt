@@ -5,3 +5,7 @@ requests==2.31.0
 pillow==10.2.0
 numpy==1.26.4
 pyyaml==6.0.1
+selenium==4.21.0 # For web scraping
+webdriver-manager==4.0.1 # For web scraping
+gdown==5.2.0 # For downloading files from Google Drive
+matplotlib==3.8.2
