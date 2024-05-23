@@ -55,11 +55,50 @@ class PokemonDataset(Dataset):
         image = self.transform(image)
         return image, label
 
+class PokemonFusionDataset(Dataset):
+    def __init__(self, root_dir, transform=None):
+        """
+        Args:
+            root_dir (string): Directory with all the images organized in subfolders.
+            transform (callable, optional): Optional transform to be applied on a sample.
+        """
+        self.root_dir = root_dir
+        self.transform = transform
+        self.image_paths = []
+        self.labels = []
+        self.label_to_idx = {}
+        
+        self._prepare_dataset()
 
+    def _prepare_dataset(self):
+        # Traverse the directory structure
+        for label_idx, label in enumerate(os.listdir(self.root_dir)):
+            label_dir = os.path.join(self.root_dir, label)
+            if os.path.isdir(label_dir):
+                self.label_to_idx[label] = label_idx
+                for img_name in os.listdir(label_dir):
+                    img_path = os.path.join(label_dir, img_name)
+                    if os.path.isfile(img_path) and img_path.endswith(('.png', '.jpg', '.jpeg')):
+                        self.image_paths.append(img_path)
+                        self.labels.append(label_idx)
+
+    def __len__(self):
+        return len(self.image_paths)
+
+    def __getitem__(self, idx):
+        img_path = self.image_paths[idx]
+        image = Image.open(img_path).convert('RGB')
+        label = self.labels[idx]
+
+        if self.transform:
+            image = self.transform(image)
+
+        return image, label
 
 if __name__ == '__main__':
 
     import matplotlib.pyplot as plt
+
     # Usage
     root_dir = 'data/processed'  
     labels = ['front', 'back', 'shiny'] 
@@ -81,5 +120,19 @@ if __name__ == '__main__':
     # Example of iterating over DataLoader
     for images, labels in dataloader:
         # Process images and labels here
+        print(images.shape, labels)
+        break
+
+
+    trans = transforms.Compose([
+        # resize to 64x64
+        transforms.Resize((64, 64)),
+        transforms.ToTensor()
+    ])
+
+    fusion_dataset = PokemonFusionDataset('data/fusion', transform=trans)
+    dataloader = DataLoader(fusion_dataset, batch_size=4, shuffle=True)
+
+    for images, labels in dataloader:
         print(images.shape, labels)
         break
