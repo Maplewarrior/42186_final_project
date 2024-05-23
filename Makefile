@@ -41,3 +41,15 @@ scrape-fusion-data:
 
 test-dataloader:
 	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/data_utils/dataloader.py
+
+test-metadata:
+	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/data_utils/metadata.py
+
+get-fusion-data:
+	@echo "Downloading fusion data..."
+	$(PYTHON_INTERPRETER) -m gdown 1QmJwHYB0Qbu0Vuoq-DuOlkeQdlJFvXTH -O data/fusion.zip
+	@echo "Extracting fusion data..."
+	unzip -q data/fusion.zip -d data
+	rm data/fusion.zip
+	rm -rf data/__MACOSX
+	
