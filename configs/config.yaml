@@ -1,6 +1,6 @@
 data:
-  H: 40 #40
-  W: 40 #40
+  H: 64 #40
+  W: 64 #40
   channels: 3 #3
 
 training:
@@ -18,7 +18,7 @@ training:
       lr: 0.001
 
 VAE:
-  D: 512 # dimensionality of the latent space
+  D: 128 # dimensionality of the latent space
 
 DDPM:
   T: 500

@@ -116,6 +116,14 @@ class PokemonFusionDataset(Dataset):
 
         return image, label
 
+# Custom transformation to resize sprites while preserving clarity
+class ResizeSprite:
+    def __init__(self, size):
+        self.size = size
+
+    def __call__(self, image):
+        return image.resize(self.size, Image.NEAREST)
+
 if __name__ == '__main__':
 
     import matplotlib.pyplot as plt
@@ -150,13 +158,6 @@ if __name__ == '__main__':
 
     # ======================== Pokemon fusion dataset test ========================
 
-    # Custom transformation to resize sprites while preserving clarity
-    class ResizeSprite:
-        def __init__(self, size):
-            self.size = size
-
-        def __call__(self, image):
-            return image.resize(self.size, Image.NEAREST)
 
     # Sample usage
     root_dir = 'data/fusion'
