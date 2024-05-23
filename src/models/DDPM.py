@@ -47,7 +47,6 @@ class DDPM(nn.Module):
         # draw x_T from a standard Gaussian
         x = td.Normal(loc=0, scale=1).sample((n_samples, self.CFG['data']['channels'], self.CFG['data']['H'], self.CFG['data']['W'])).to(self.device)
         
-        pdb.set_trace()
         for i in self.ts: # ts = [T-1, ..., 0]
         
             t = (torch.ones(n_samples, device=self.device) * i).long()
@@ -65,7 +64,7 @@ class DDPM(nn.Module):
             noise = torch.sqrt(self.sigmas[t]) * z
             
             x = mu + noise 
-            if i % 10 == 0:
+            if i % 50 == 0:
                 print(f'iter: {self.T-i}/{self.T}')
             
         
