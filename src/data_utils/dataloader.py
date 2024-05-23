@@ -50,8 +50,10 @@ class PokemonDataset(Dataset):
                                     # imagename is digit?
                                     if not image_name.isdigit() or int(image_name) == 0:
                                         continue
-
-                                    self.image_labels.append(self.metadata.get_type_by_id(int(image_name)))
+                                    
+                                    type_name = self.metadata.get_type_by_id(int(image_name))
+                                        
+                                    self.image_labels.append(type_name)
                                     self.image_paths.append(os.path.join(label_path, img_file))
                                     # self.image_labels.append(label)
 
@@ -142,8 +144,9 @@ if __name__ == '__main__':
     # Example of iterating over DataLoader
     for images, labels in dataloader:
         # Process images and labels here
-        print(images.shape, labels)
-        break
+        # print(images.shape, labels)
+        # break
+        pass
 
     # ======================== Pokemon fusion dataset test ========================
 
@@ -161,7 +164,6 @@ if __name__ == '__main__':
         # transforms.Resize((64, 64)),
         # crop the image to 164x164
         transforms.CenterCrop(220),
-
         ResizeSprite((64, 64)),
         # transforms.RandomHorizontalFlip(p=0.0),  # This line is optional
         transforms.ToTensor()
@@ -186,7 +188,7 @@ if __name__ == '__main__':
         ax.imshow(images[i].permute(1, 2, 0))
         ax.axis('off')
 
-    plt.title('Pokemon Fusion Dataset')
+    # plt.title('Pokemon Fusion Dataset')
 
     plt.tight_layout()
     plt.show()

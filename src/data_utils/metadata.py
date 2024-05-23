@@ -3,6 +3,10 @@ import os
 import requests
 import pandas as pd
 import zipfile
+import pdb
+
+def is_nan(element):
+    return element != element
 
 class PokemonMetaData():
     def __init__(self, types_path="data/types.csv"):
@@ -46,7 +50,7 @@ class PokemonMetaData():
             print(f"types.csv not found at {types_path}")
 
             types_folder = os.path.dirname(types_path)
-            types = self.download_types_csv(save_folder=types_folder)
+            types = self.__download_types_csv(save_folder=types_folder)
             return types
         else:
             types = pd.read_csv(types_path)
@@ -70,9 +74,23 @@ class PokemonMetaData():
         # get Type1 
         type1 = row["Type 1"].values[0]
 
+        # if type1 not in ['Grass', 'Fire', 'Water', 'Bug', 'Flying', 'Poison', 'Electric', 'Ground', 'Fairy', 'Fighting', 'Psychic', 'Rock', 'Ghost', 'Ice', 'Dragon', 'Dark', 'Steel', 'Normal']:
+            # pdb.set_trace()
+
         if type1 == "Normal":
             type2 = row["Type 2"].values[0]
+            if is_nan(type2):
+                return type1
             return type2
         
         return type1
     
+# %%
+if __name__ == "__main__":
+    metadata = PokemonMetaData("../../data/types.csv")
+    types_df = metadata.types
+
+    # check for nam in Real Types
+    print(types_df["Real Type"].unique())
+
+# %%
