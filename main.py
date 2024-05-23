@@ -14,7 +14,7 @@ from src.models.VAE import VAE, GaussianEncoder, MultivariateGaussianDecoder
 from src.models.vae_priors import StdGaussianPrior
 from src.utils.misc import load_config
 from src.visualizations.functions import denormalize, save_images
-
+from src.visualizations.plot_loss import plot_loss
 
 def build_model(model_type: str, CFG: dict, device: str):
     H = CFG['data']['H']
@@ -82,12 +82,14 @@ if __name__ == '__main__':
         ### initialize dataloader
         dataset = build_dataset(args.data_type, args.model_type)
         train_loader = DataLoader(dataset, batch_size=CFG['training']['batch_size'], shuffle=True)
-        
+
         ### train model
         print("Starting training!")
         trainer = Trainer(model, train_loader, config_path='configs/config.yaml', device=device)
-        trainer.train()
+        losses = trainer.train()
+        plot_loss(losses, args.model_type) # save plot of losses
         torch.save(model.state_dict(), f='weights/{args.model_type}_weights.pt')
+
         
     if args.mode == 'eval':
         print(f'Evaluating...')
