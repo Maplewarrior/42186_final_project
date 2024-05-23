@@ -3,7 +3,7 @@ from PIL import Image
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
 from src.data_utils.metadata import PokemonMetaData
-
+import pdb
 
 def divide_by_255(x):
     return x / 255.0
@@ -95,10 +95,19 @@ class PokemonFusionDataset(Dataset):
     def __len__(self):
         return len(self.image_paths)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx):        
         img_path = self.image_paths[idx]
-        image = Image.open(img_path).convert('RGB')
+        image = Image.open(img_path).convert('RGBA')  # Open image in RGBA mode to handle transparency
         label = self.labels[idx]
+
+        # Check if image has transparency
+        if image.mode == 'RGBA':
+            # Create a white background image
+            white_background = Image.new('RGBA', image.size, (255, 255, 255, 255))
+            # Paste the image on top of the white background
+            image = Image.alpha_composite(white_background, image)
+            # Convert back to RGB
+            image = image.convert('RGB')
 
         if self.transform:
             image = self.transform(image)
@@ -121,8 +130,8 @@ if __name__ == '__main__':
 
     transform = transforms.Compose([
                 # Add more transforms here as needed
-                transforms.ToTensor(),
-                transforms.Lambda(divide_by_255)
+                transforms.ToTensor()
+                # transforms.Lambda(divide_by_255)
             ])
 
     pokemon_dataset = PokemonDataset(root_dir, labels, games=games, transform=transform)
@@ -138,10 +147,22 @@ if __name__ == '__main__':
 
     # ======================== Pokemon fusion dataset test ========================
 
+    # Custom transformation to resize sprites while preserving clarity
+    class ResizeSprite:
+        def __init__(self, size):
+            self.size = size
+
+        def __call__(self, image):
+            return image.resize(self.size, Image.NEAREST)
+
     # Sample usage
     root_dir = 'data/fusion'
     trans = transforms.Compose([
-        transforms.Resize((64, 64)),
+        # transforms.Resize((64, 64)),
+        # crop the image to 164x164
+        transforms.CenterCrop(220),
+
+        ResizeSprite((64, 64)),
         # transforms.RandomHorizontalFlip(p=0.0),  # This line is optional
         transforms.ToTensor()
     ])
@@ -149,11 +170,23 @@ if __name__ == '__main__':
     fusion_dataset = PokemonFusionDataset(root_dir, transform=trans)
 
     # Create a DataLoader
-    dataloader = DataLoader(fusion_dataset, batch_size=4, shuffle=True)
+    dataloader = DataLoader(fusion_dataset, batch_size=32, shuffle=True)
 
     # Example of iterating over DataLoader
     for images, labels in dataloader:
         # Process images and labels here
         print(images.shape, labels)
         break
+        
 
+    fig, axs = plt.subplots(4, 8, figsize=(10, 10))
+    axs = axs.flatten()
+    for i in range(16*2):
+        ax = axs[i]
+        ax.imshow(images[i].permute(1, 2, 0))
+        ax.axis('off')
+
+    plt.title('Pokemon Fusion Dataset')
+
+    plt.tight_layout()
+    plt.show()
