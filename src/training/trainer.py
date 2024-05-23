@@ -2,6 +2,8 @@ from src.utils.misc import load_config
 from tqdm import tqdm
 import torch.optim as optim
 import torch
+import pdb
+
 class Trainer:
     def __init__(self, model, train_loader, config_path: str, device: str) -> None:
         self.model = model
@@ -23,9 +25,10 @@ class Trainer:
         with tqdm(total=self.CFG['training']['n_epochs']*len(self.train_loader), desc="Training", unit="iter") as pbar:
             for _ in range(self.CFG['training']['n_epochs']):
                 for batch, _ in self.train_loader:
-                    batch.to(self.device)
-                    self.optimizer.zero_grad()
+                    batch = batch.to(self.device)
                     loss = self.model.loss(batch)
+                    
+                    self.optimizer.zero_grad()
                     loss.backward()
                     self.optimizer.step()
                     losses.append(loss.item())

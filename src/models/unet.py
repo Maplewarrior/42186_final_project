@@ -1,12 +1,8 @@
-"""
-This code is copied from the week 3 exercises of the course
-"Advanced Deep Learning in Computer Vision" at DTU.
-"""
-
 # Adapted from : https://github.com/dome272/Diffusion-Models-pytorch
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import pdb
 
 class SelfAttention(nn.Module):
     def __init__(self, channels, size):
@@ -141,6 +137,7 @@ class UNet(nn.Module):
 
         t = t.unsqueeze(-1).type(torch.float)
         t = self.pos_encoding(t, self.time_dim)
+        
         x1 = self.inc(x)
         x2 = self.down1(x1, t)
         x2 = self.sa1(x2)

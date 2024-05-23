@@ -4,6 +4,7 @@ import torch.distributions as td
 from torch.distributions.kl import kl_divergence as KL
 from src.models.utils import Reshape
 import pdb
+
 class GaussianEncoder(nn.Module):
     def __init__(self, H: int, W: int, D: int) -> None:
         super().__init__()

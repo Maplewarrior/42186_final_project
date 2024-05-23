@@ -1,10 +1,10 @@
 data:
-  H: 40
-  W: 40
-  channels: 3
+  H: 40 #40
+  W: 40 #40
+  channels: 3 #3
 
 training:
-  n_epochs: 100
+  n_epochs: 200
   batch_size: 64
   optimization:
     optimizer_name: Adam # which optimizer to use during training
@@ -21,4 +21,4 @@ VAE:
   D: 512 # dimensionality of the latent space
 
 DDPM:
-  T: 200
+  T: 500
