@@ -36,6 +36,8 @@ clean:
 get-data:
 	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/data_utils/get_data.py
 
+scrape-fusion-data:
+	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/data_utils/scrape_fusion.py
 
 test-dataloader:
 	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/data_utils/dataloader.py
