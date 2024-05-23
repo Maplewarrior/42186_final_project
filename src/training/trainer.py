@@ -5,6 +5,8 @@ import torch
 import pdb
 import torchvision
 import matplotlib.pyplot as plt
+import os
+import wandb
 
 def save_images(images, path, show=True, title=None, nrow=10):
     grid = torchvision.utils.make_grid(images, nrow=nrow)
@@ -26,12 +28,14 @@ def denormalize(x):
 
 
 class Trainer:
-    def __init__(self, model, train_loader, config_path: str, device: str) -> None:
+    def __init__(self, model, train_loader, config_path: str, device: str, uuid: str, wandb: wandb = None) -> None:
         self.model = model
         self.train_loader = train_loader
         self.CFG = load_config(config_path)
         self.device=device
         self.__initialize_training_utils()
+        self.wandb = wandb
+        self.uuid = uuid
     
     def __initialize_training_utils(self):
         optimizer_name = self.CFG['training']['optimization']['optimizer_name']
@@ -54,13 +58,26 @@ class Trainer:
                     loss.backward()
                     self.optimizer.step()
                     losses.append(loss.item())
+                    if self.wandb: wandb.log({"epoch": epoch, "loss": sum(losses)/len(losses)})
                     pbar.set_postfix({'Current loss': sum(losses)/len(losses)}, refresh=True)
                     pbar.update(1)
                 
-                if epoch % 50 == 0:
+                if epoch+1 % 50 == 0:
                     with torch.no_grad():
                         samples = self.model.sample(n_samples=20)
-                    save_images(denormalize(samples), path = f'DDPM_samples/epoch{epoch+1}_samples.png', 
+                    os.makedirs("DDPM_samples", exist_ok=True)
+                    image_path = f'DDPM_samples/epoch{epoch+1}_samples.png'
+                    save_images(denormalize(samples), path = image_path, 
                                 show=False, title=f'Epoch {epoch+1} samples')
+
+                    if self.wandb: wandb.log({"sample_images": wandb.Image(image_path, caption=f'Epoch {epoch+1} samples')})
                     
+                    checkpoint = {'model': self.model.state_dict(),
+                                  'optimizer': self.optimizer.state_dict(),
+                                  'config': self.CFG}
+
+                    checkpoint_path = f'checkpoints/{self.uuid}/checkpoint_{epoch}epochs.pt'
+                    os.makedirs(f"checkpoints/{self.uuid}/", exist_ok=True)
+                    torch.save(checkpoint, checkpoint_path)
+
         return losses
