@@ -1,5 +1,6 @@
 # %%
 import os
+from functools import cached_property
 import requests
 import pandas as pd
 import zipfile
@@ -60,7 +61,7 @@ class PokemonMetaData():
         # apply get_type_by_id to all rows
         self.types["Real Type"] = self.types.apply(lambda row: self.get_type_by_id(row["#"]), axis=1)
 
-    def get_type_by_id(self, id):
+    def get_type_by_id(self, id, numeric=False):
         """Gets the main type for a pokemon by id. 
         This will return type 1 for any pokemon and type 2 if type 1 is Normal
         
@@ -74,17 +75,21 @@ class PokemonMetaData():
         # get Type1 
         type1 = row["Type 1"].values[0]
 
-        # if type1 not in ['Grass', 'Fire', 'Water', 'Bug', 'Flying', 'Poison', 'Electric', 'Ground', 'Fairy', 'Fighting', 'Psychic', 'Rock', 'Ghost', 'Ice', 'Dragon', 'Dark', 'Steel', 'Normal']:
-            # pdb.set_trace()
-
         if type1 == "Normal":
             type2 = row["Type 2"].values[0]
-            if is_nan(type2):
-                return type1
-            return type2
-        
-        return type1
+            if not is_nan(type2):
+                return type2 if not numeric else self.types_dict[type2]
+        return type1 if not numeric else self.types_dict[type1]
     
+    @cached_property
+    def unique_types(self):
+        return self.types["Real Type"].unique()
+    
+    @cached_property
+    def types_dict(self):
+        # sort unique 
+        unique_types = sorted(self.unique_types)
+        return {type_: idx for idx, type_ in enumerate(unique_types)}
 # %%
 if __name__ == "__main__":
     metadata = PokemonMetaData("../../data/types.csv")
@@ -92,5 +97,7 @@ if __name__ == "__main__":
 
     # check for nam in Real Types
     print(types_df["Real Type"].unique())
+
+    print(metadata.types_dict)
 
 # %%

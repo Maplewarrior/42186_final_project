@@ -51,7 +51,7 @@ class PokemonDataset(Dataset):
                                     if not image_name.isdigit() or int(image_name) == 0:
                                         continue
                                     
-                                    type_name = self.metadata.get_type_by_id(int(image_name))
+                                    type_name = self.metadata.get_type_by_id(int(image_name), numeric=True)
                                         
                                     self.image_labels.append(type_name)
                                     self.image_paths.append(os.path.join(label_path, img_file))
@@ -74,25 +74,25 @@ class PokemonFusionDataset(Dataset):
             root_dir (string): Directory with all the images organized in subfolders.
             transform (callable, optional): Optional transform to be applied on a sample.
         """
+        self.metadata = PokemonMetaData()
         self.root_dir = root_dir
         self.transform = transform
         self.image_paths = []
         self.labels = []
-        self.label_to_idx = {}
+        self.label_to_idx = self.metadata.types_dict
         
         self._prepare_dataset()
 
     def _prepare_dataset(self):
         # Traverse the directory structure
-        for label_idx, label in enumerate(os.listdir(self.root_dir)):
+        for label in os.listdir(self.root_dir):
             label_dir = os.path.join(self.root_dir, label)
             if os.path.isdir(label_dir):
-                self.label_to_idx[label] = label_idx
                 for img_name in os.listdir(label_dir):
                     img_path = os.path.join(label_dir, img_name)
                     if os.path.isfile(img_path) and img_path.endswith(('.png', '.jpg', '.jpeg')):
                         self.image_paths.append(img_path)
-                        self.labels.append(label_idx)
+                        self.labels.append(self.label_to_idx[label])
 
     def __len__(self):
         return len(self.image_paths)
