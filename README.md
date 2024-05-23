@@ -7,7 +7,7 @@ make requirements
 ```
 
 > [!NOTE]  
-> YOu should setup a venv or conda environment for the project
+> You should setup a venv or conda environment for the project
 
 ## Downlaod data
 To download the data and process it, run the following command:
