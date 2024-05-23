@@ -11,11 +11,8 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from webdriver_manager.firefox import GeckoDriverManager
-import time
 from tqdm import tqdm
-
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
 # %%
 def get_img_urls():
     url = "https://fusioncalc.com/"
@@ -132,10 +129,9 @@ class PokemonMetaData():
         
         return type1
     
-
 # %%
 if __name__ == "__main__":
-    metadata = PokemonMetaData("../../data/types.csv")
+    metadata = PokemonMetaData("./data/types.csv")
     types_df = metadata.types
 
     # %% 
@@ -162,7 +158,7 @@ if __name__ == "__main__":
     # Function to process a row in parallel
     def process_row(row):
         type_, id1, id2 = row.type, row.id1, row.id2
-        result = get_fusion(id1, id2, save_folder=f"../../data/fusion/{type_}")
+        result = get_fusion(id1, id2, save_folder=f"./data/fusion/{type_}")
         return result
 
     # Run the fusion generation in parallel with a progress bar
