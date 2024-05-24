@@ -62,7 +62,7 @@ class Trainer:
                     pbar.set_postfix({'Current loss': sum(losses)/len(losses)}, refresh=True)
                     pbar.update(1)
                 
-                if epoch+1 % 50 == 0:
+                if (epoch+1) % 50 == 0:
                     with torch.no_grad():
                         samples = self.model.sample(n_samples=20)
                     os.makedirs("DDPM_samples", exist_ok=True)
