@@ -92,7 +92,7 @@ class Trainer:
                     checkpoint = {'model': self.model.state_dict(),
                                   'optimizer': self.optimizer.state_dict(),
                                   'config': self.CFG}
-                    if self.model.name == "DDPM"
+                    if self.model.name == "DDPM":
                         checkpoint_path = f'checkpoints/DDPM/{self.uuid}/checkpoint_{epoch}epochs.pt'
                     elif self.model.name == "VAE":
                         checkpoint_path = f'checkpoints/VAE/{self.uuid}/checkpoint_{epoch}epochs.pt'
