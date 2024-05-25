@@ -4,6 +4,7 @@ import torch.optim as optim
 import torch
 import pdb
 import torchvision
+from torchvision.utils import save_image
 import matplotlib.pyplot as plt
 import os
 import wandb
@@ -77,8 +78,12 @@ class Trainer:
                         samples = self.model.sample(n_samples=20)
                     os.makedirs("DDPM_samples", exist_ok=True)
                     image_path = f'DDPM_samples/epoch{epoch+1}_samples.png'
-                    save_images(denormalize(samples), path = image_path, 
-                                show=False, title=f'Epoch {epoch+1} samples')
+                    if self.model.name == 'DDPM':
+                        save_images(denormalize(samples), path = image_path, 
+                                    show=False, title=f'Epoch {epoch+1} samples')
+                    
+                    elif self.model.name == 'VAE':
+                        save_image(samples, fp=f'figures/VAE_samples/epoch{epoch+1}.png')
 
                     if self.wandb: wandb.log({"sample_images": wandb.Image(image_path, caption=f'Epoch {epoch+1} samples')})
                     
