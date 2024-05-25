@@ -76,14 +76,16 @@ class Trainer:
                 if (epoch+1) % 50 == 0:
                     with torch.no_grad():
                         samples = self.model.sample(n_samples=20)
-                    os.makedirs("DDPM_samples", exist_ok=True)
-                    image_path = f'DDPM_samples/epoch{epoch+1}_samples.png'
+                    os.makedirs(f"DDPM_samples/{self.uuid}/", exist_ok=True)
+                    image_path = f'DDPM_samples/{self.uuid}/epoch{epoch+1}_samples.png'
                     if self.model.name == 'DDPM':
                         save_images(denormalize(samples), path = image_path, 
                                     show=False, title=f'Epoch {epoch+1} samples')
                     
                     elif self.model.name == 'VAE':
-                        save_image(samples, fp=f'figures/VAE_samples/epoch{epoch+1}.png')
+                        os.makedirs(f"VAE_samples/{self.uuid}/", exist_ok=True)
+                        image_path = f'VAE_samples/{self.uuid}/epoch{epoch+1}_samples.png'
+                        save_image(samples, fp=image_path)
 
                     if self.wandb: wandb.log({"sample_images": wandb.Image(image_path, caption=f'Epoch {epoch+1} samples')})
                     
