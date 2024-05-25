@@ -24,13 +24,16 @@ def denormalize(x):
     x = (x * 255).type(torch.uint8)
     return x
 
-
 class Trainer:
     def __init__(self, model, train_loader, config_path: str, device: str) -> None:
+        self.device=device
+        self.CFG = load_config(config_path)
+        self.n_classes = self.CFG['data']['n_classes']
+        self.row_idxs = list(range(self.CFG['training']['batch_size']))
+
         self.model = model
         self.train_loader = train_loader
-        self.CFG = load_config(config_path)
-        self.device=device
+    
         self.__initialize_training_utils()
     
     def __initialize_training_utils(self):
@@ -39,6 +42,12 @@ class Trainer:
             self.optimizer = optim.Adam(self.model.parameters(), 
                                         lr=self.CFG['training']['optimization']['Adam']['lr'],
                                         betas=self.CFG['training']['optimization']['Adam']['betas'])
+    
+    def to_onehot(self, y):
+        y_onehot = torch.zeros((y.size(0), self.n_classes), device=self.device)
+        y_onehot[self.row_idxs, y] = 1
+        return y_onehot
+
     def train(self):
         self.model.train()
         self.model.to(self.device)
@@ -46,9 +55,11 @@ class Trainer:
         
         with tqdm(total=self.CFG['training']['n_epochs']*len(self.train_loader), desc="Training", unit="iter") as pbar:
             for epoch in range(self.CFG['training']['n_epochs']):
-                for batch, _ in self.train_loader:
+                for batch, label in self.train_loader:
                     batch = batch.to(self.device)
-                    loss = self.model.loss(batch)
+                    label = label.to(self.device)
+
+                    loss = self.model.loss(batch, self.to_onehot(label))
                     
                     self.optimizer.zero_grad()
                     loss.backward()
@@ -57,10 +68,19 @@ class Trainer:
                     pbar.set_postfix({'Current loss': sum(losses)/len(losses)}, refresh=True)
                     pbar.update(1)
                 
-                if epoch % 50 == 0:
+                if epoch+1 % 50 == 0:
                     with torch.no_grad():
                         samples = self.model.sample(n_samples=20)
                     save_images(denormalize(samples), path = f'DDPM_samples/epoch{epoch+1}_samples.png', 
                                 show=False, title=f'Epoch {epoch+1} samples')
+                    
+                    checkpoint = {'model': self.model.state_dict(),
+                                  'optimizer': self.optimizer.state_dict(),
+                                  'cfg': self.CFG}
+                    
+                    torch.save(checkpoint, f'checkpoint_{epoch+1}epochs.pth')
+                    
+
+
                     
         return losses

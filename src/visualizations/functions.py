@@ -2,7 +2,7 @@ import torchvision
 import matplotlib.pyplot as plt
 import torch
 
-def save_images(images, path, show=True, title=None, nrow=10):
+def save_images(images, path, show=False, title=None, nrow=8):
     """
     Function for displaying and saving diffusion samples.
     """

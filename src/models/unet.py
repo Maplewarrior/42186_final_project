@@ -98,10 +98,12 @@ class Up(nn.Module):
 
 
 class UNet(nn.Module):
-    def __init__(self, img_size=16, c_in=3, c_out=3, time_dim=256, device="cpu", channels=32):
+    def __init__(self, img_size=64, c_in=3, c_out=3, time_dim=256, device="cpu", channels=32, n_classes=None):
         super().__init__()
         self.device = device
         self.time_dim = time_dim
+        self.n_classes = n_classes
+
         self.inc = DoubleConv(c_in, channels)
         self.down1 = Down(channels, channels*2,  emb_dim=time_dim)
         self.sa1 = SelfAttention(channels*2, img_size//2)
@@ -123,6 +125,15 @@ class UNet(nn.Module):
         self.sa6 = SelfAttention(channels, img_size)
         self.outc = nn.Conv2d(channels, c_out, kernel_size=1)
 
+        if n_classes is not None:
+            
+            # Project one-hot encoded labels to the time embedding dimension 
+            # Implement it as a 2-layer MLP with a GELU activation in-between
+            self.embed_y = nn.Sequential(
+                nn.Linear(n_classes, time_dim),
+                nn.GELU(),
+                nn.Linear(time_dim, time_dim))
+
     def pos_encoding(self, t, channels):
         inv_freq = 1.0 / (
             10000
@@ -132,11 +143,14 @@ class UNet(nn.Module):
         pos_enc_b = torch.cos(t.repeat(1, channels // 2) * inv_freq)
         pos_enc = torch.cat([pos_enc_a, pos_enc_b], dim=-1)
         return pos_enc
-
-    def forward(self, x, t):
+    
+    def forward(self, x, t, y=None):
 
         t = t.unsqueeze(-1).type(torch.float)
         t = self.pos_encoding(t, self.time_dim)
+        if y is not None: # do Classifier Free Guidance
+            y_emb = self.embed_y(y) # project y to same dimension as t
+            t += y_emb # add class embedding to time embedding
         
         x1 = self.inc(x)
         x2 = self.down1(x1, t)

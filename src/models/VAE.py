@@ -104,6 +104,7 @@ class MultivariateGaussianDecoder(nn.Module):
 class VAE(nn.Module):
     def __init__(self, encoder, decoder, prior) -> None:
         super().__init__()
+        self.name = 'VAE'
         self.encoder = encoder
         self.decoder = decoder
         self.prior = prior
@@ -120,6 +121,6 @@ class VAE(nn.Module):
         z = self.prior().sample(torch.Size([n_samples]))
         return self.decoder(z).sample()
     
-    def loss(self, x: torch.tensor):
+    def loss(self, x: torch.tensor, y):
         return -self.ELBO(x)
 

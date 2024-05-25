@@ -29,7 +29,7 @@ def build_model(model_type: str, CFG: dict, device: str):
         model = VAE(encoder, decoder, prior).to(device)
     
     elif model_type == 'DDPM':
-        unet = UNet(img_size=H, c_in=C, c_out=C, device=device).to(device)
+        unet = UNet(img_size=H, c_in=C, c_out=C, device=device, n_classes=CFG['data']['n_classes']).to(device)
         model = DDPM(unet=unet, cfg=CFG, device=device).to(device)
 
     return model
@@ -69,10 +69,15 @@ if __name__ == '__main__':
     parser.add_argument('mode', type=str, default='train', choices=['train', 'sample', 'eval'], help='what to do when running the script (default: %(default)s)')
     parser.add_argument('--model-type', type=str, default='VAE', choices=['VAE', 'DDPM'], help='What type of model to use (default: %(default)s)')
     parser.add_argument('--data-type', type=str, default='original', choices=['original', 'fusion', 'all'], help='What type of data to use (default: %(default)s)')
+    parser.add_argument('--p-uncond', type=float, default=None, help='probability of doing unconditional sampling when training DDPM model. If None the value in config is kept.')
     args = parser.parse_args()
     
     CFG = load_config('configs/config.yaml')
     device = ('cuda' if torch.cuda.is_available() else 'cpu')
+    
+    if args.p_uncond != None:
+        CFG['DDPM']['p_uncond'] = args.p_uncond
+    
     
     if args.mode == 'train':
         print("Training...")
@@ -81,7 +86,8 @@ if __name__ == '__main__':
        
         ### initialize dataloader
         dataset = build_dataset(args.data_type, args.model_type)
-        train_loader = DataLoader(dataset, batch_size=CFG['training']['batch_size'], shuffle=True)
+        # define dataloader --> NOTE: drop_last=True because CFG implementation expects a fixed batch size
+        train_loader = DataLoader(dataset, batch_size=CFG['training']['batch_size'], shuffle=True, drop_last=True)
 
         ### train model
         print("Starting training!")
@@ -90,7 +96,6 @@ if __name__ == '__main__':
         plot_loss(losses, args.model_type) # save plot of losses
         torch.save(model.state_dict(), f='weights/{args.model_type}_weights.pt')
 
-        
     if args.mode == 'eval':
         print(f'Evaluating...')
         raise NotImplementedError()

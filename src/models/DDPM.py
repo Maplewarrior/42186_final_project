@@ -6,11 +6,13 @@ from src.utils.misc import load_config
 class DDPM(nn.Module):
     def __init__(self, unet, cfg: dict, device) -> None:
         super().__init__()
+        self.name = 'DDPM'
         self.CFG = cfg
         self.unet = unet
         self.mse = nn.MSELoss(reduction='none')
         self.device = device
         self.T = self.CFG['DDPM']['T']
+        self.p_uncond = self.CFG['DDPM']['p_uncond']
         self.__init_dependencies()
     
     def __init_dependencies(self):
@@ -20,27 +22,33 @@ class DDPM(nn.Module):
         self.alphas = 1 - self.betas
         self.alpha_bar = torch.cumprod(self.alphas, dim=0).to(self.device)
         
-    def forward(self, x: torch.tensor):
+    def forward(self, x: torch.tensor, y: torch.tensor = None):
         """
-        Function that implements the training algorithm from the DDPM paper
+        Function that implements a single step of the training algorithm from the DDPM paper
         """
         # sample a time-step uniformly (one for each input in batch)
         t = torch.randint(low=0, high=self.T, size=(x.size(0),)).to(self.device)
+
         # sample noise from a standard multivariate Gaussian
         eps = td.Normal(loc=0, scale=1).sample(x.size()).to(self.device)
-        # x_noised = self.unsqueeze(torch.sqrt(self.alpha_bar[t])) * x + self.unsqueeze(torch.sqrt(1 - self.alpha_bar[t])) * eps
+        # apply noise to the input image
         x_noised = x * torch.sqrt(self.alpha_bar[t]) + eps * torch.sqrt(1 - self.alpha_bar[t])
-        predicted_noise = self.unet(x_noised, t)
+        
+        if self.p_uncond < torch.rand(1).item(): # do uncoditional training with probability p_uncond
+            y = None
+        
+        # do noise prediction
+        predicted_noise = self.unet(x_noised, t, y)
         return predicted_noise, eps
     
     def unsqueeze(self, x: torch.tensor):
         return x[:, None, None, None]
 
-    def loss(self, x):
-        noise_pred, noise = self.forward(x)
+    def loss(self, x, y):
+        noise_pred, noise = self.forward(x, y)
         return self.mse(noise_pred, noise).mean()
 
-    def sample(self, n_samples: int):
+    def sample(self, n_samples: int, y=None):
         """
         Function that implements the sampling algorithm from the DDPM paper
         """
@@ -54,12 +62,8 @@ class DDPM(nn.Module):
                 z = td.Normal(loc=0, scale=1).sample(x.size()).to(self.device)
             else:
                 z = torch.zeros_like(z)
-
-            # alpha = self.alphas[t]
-            alpha_bar = self.alpha_bar[t]
-            
+  
             eps = self.unet(x, t)
-            # mu = (x - (self.betas[t]) / (torch.sqrt(1 - alpha_bar)) * eps) / torch.sqrt(alpha)
             mu = (x - (1 - self.alphas[t]) / (torch.sqrt(1 - self.alpha_bar[t])) * eps) / torch.sqrt(self.alphas[t])
             noise = torch.sqrt(self.sigmas[t]) * z
             
