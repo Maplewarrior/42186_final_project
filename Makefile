@@ -47,9 +47,12 @@ test-metadata:
 
 get-fusion-data:
 	@echo "Downloading fusion data..."
-	$(PYTHON_INTERPRETER) -m gdown 1MTTFKP01Mq7n1KvVfLUpcNs52L4j2h0i -O data/fusion.zip
+	$(PYTHON_INTERPRETER) -m gdown 1QmwBJNZjsPcnBnBBbjOw6zRT95zeviB3 -O data/fusion.zip
 	@echo "Extracting fusion data..."
 	unzip -q data/fusion.zip -d data
 	rm data/fusion.zip
 	rm -rf data/__MACOSX
 	
+# This is just an example implementation so far
+calculate-fid:
+	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/calculate_fid.py
