@@ -10,3 +10,4 @@ webdriver-manager==4.0.1 # For web scraping
 gdown==5.2.0 # For downloading files from Google Drive
 matplotlib==3.8.2
 pandas==2.2.2
+torcheval==0.0.7 # Used to evaluate FID
