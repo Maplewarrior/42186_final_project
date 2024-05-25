@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Check if an experiment name was provided
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 MODEL DATATYPE"
+if [ "$#" -ne 2 ] && [ "$#" -ne 3 ]; then
+    echo "Usage: $0 MODEL DATATYPE [P_UNCOND_DDPM]"
     exit 1
 fi
 
@@ -19,7 +19,15 @@ JOB_SCRIPT_TEMPLATE="./jobscript_template.sh"
 # Temporary job script file that will be populated with environment variables and the experiment name
 TEMP_JOB_SCRIPT="./jobscript_populated.sh"
 
-RUN_EXPERIMENTS_ARGS="--model-type ${MODEL} --data-type ${DATATYPE} --wandb"
+
+# Optionally provide two additional arguments for the loss_type and the model_type
+if [ "$#" -eq 3 ]; then
+    P_UNCOND="$3"
+    # Assign the loss and model types to variables
+    RUN_EXPERIMENTS_ARGS="--model-type ${MODEL} --data-type ${DATATYPE} --wandb --p-uncond ${P_UNCOND}"
+else 
+    RUN_EXPERIMENTS_ARGS="--model-type ${MODEL} --data-type ${DATATYPE} --wandb"
+fi
 
 # Replace placeholders in the template with actual environment variable values and the experiment name
 sed -e "s|\${VENV_PATH}|$VENV_PATH|g" \
