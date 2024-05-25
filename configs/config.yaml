@@ -4,8 +4,8 @@ data:
   channels: 3 #3
 
 training:
-  n_epochs: 200
-  batch_size: 64
+  n_epochs: 600
+  batch_size: 24
   optimization:
     optimizer_name: Adam # which optimizer to use during training
     Adam:

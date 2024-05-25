@@ -98,5 +98,5 @@ if __name__ == '__main__':
 
     download_data(dataset_urls, data_raw_path)
 
-    resize_images(data_raw_path, data_processed_path, size=40)
+    resize_images(data_raw_path, data_processed_path, size=64)
 

@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # Check if an experiment name was provided
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 MODEL"
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 MODEL DATATYPE"
     exit 1
 fi
 
 # The first argument is the experiment name
 MODEL="$1"
+DATATYPE="$2"
 
 # Source your environment variables
 source ./env_vars.sh
@@ -18,7 +19,7 @@ JOB_SCRIPT_TEMPLATE="./jobscript_template.sh"
 # Temporary job script file that will be populated with environment variables and the experiment name
 TEMP_JOB_SCRIPT="./jobscript_populated.sh"
 
-RUN_EXPERIMENTS_ARGS="--experiment ${MODEL}"
+RUN_EXPERIMENTS_ARGS="--model-type ${MODEL} --data-type ${DATATYPE} --wandb"
 
 # Replace placeholders in the template with actual environment variable values and the experiment name
 sed -e "s|\${VENV_PATH}|$VENV_PATH|g" \
@@ -33,8 +34,8 @@ sed -e "s|\${VENV_PATH}|$VENV_PATH|g" \
     -e "s|\${RUN_EXPERIMENTS_ARGS}|$RUN_EXPERIMENTS_ARGS|g" \
     "$JOB_SCRIPT_TEMPLATE" > "$TEMP_JOB_SCRIPT"
 
-# # Submit the job
-# bsub < "$TEMP_JOB_SCRIPT"
+# Submit the job
+bsub < "$TEMP_JOB_SCRIPT"
 
-# # Optionally, remove the temporary job script after submission
-# rm "$TEMP_JOB_SCRIPT"
+# Optionally, remove the temporary job script after submission
+rm "$TEMP_JOB_SCRIPT"

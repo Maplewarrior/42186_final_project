@@ -15,6 +15,9 @@ from src.models.vae_priors import StdGaussianPrior
 from src.utils.misc import load_config
 from src.visualizations.functions import denormalize, save_images
 from src.visualizations.plot_loss import plot_loss
+import uuid
+
+import wandb
 
 def build_model(model_type: str, CFG: dict, device: str):
     H = CFG['data']['H']
@@ -70,8 +73,9 @@ if __name__ == '__main__':
     parser.add_argument('--model-type', type=str, default='VAE', choices=['VAE', 'DDPM'], help='What type of model to use (default: %(default)s)')
     parser.add_argument('--data-type', type=str, default='original', choices=['original', 'fusion', 'all'], help='What type of data to use (default: %(default)s)')
     parser.add_argument('--p-uncond', type=float, default=None, help='probability of doing unconditional sampling when training DDPM model. If None the value in config is kept.')
+    parser.add_argument('--wandb', action='store_true')
     args = parser.parse_args()
-    
+
     CFG = load_config('configs/config.yaml')
     device = ('cuda' if torch.cuda.is_available() else 'cpu')
     
@@ -89,12 +93,37 @@ if __name__ == '__main__':
         # define dataloader --> NOTE: drop_last=True because CFG implementation expects a fixed batch size
         train_loader = DataLoader(dataset, batch_size=CFG['training']['batch_size'], shuffle=True, drop_last=True)
 
+
+        uid = uuid.uuid4()
+        weight_filename = f'weights/{args.model_type}_weights_{uid}.pt'
+
         ### train model
         print("Starting training!")
-        trainer = Trainer(model, train_loader, config_path='configs/config.yaml', device=device)
+        if args.wandb:
+            # start a new wandb run to track this script
+            wandb.init(
+                # set the wandb project where this run will be logged
+                project="MBMLexam",
+                # track hyperparameters and run metadata
+                config={
+                "data-type": args.data_type,
+                "model-type": args.model_type,
+                "batch-size": CFG['training']['batch_size'],
+                "weight-file": weight_filename,
+                "uid": uid,
+                "optimizer": CFG["training"]["optimization"]["optimizer_name"],
+                "learning-rate": CFG["training"]["optimization"][CFG["training"]["optimization"]["optimizer_name"]]["lr"]
+                }
+            )
+
+        if args.wandb:
+            trainer = Trainer(model, train_loader, config_path='configs/config.yaml', device=device, uuid=uid, wandb=wandb)
+        else:
+            trainer = Trainer(model, train_loader, config_path='configs/config.yaml', device=device, uuid=uid)
         losses = trainer.train()
         plot_loss(losses, args.model_type) # save plot of losses
-        torch.save(model.state_dict(), f='weights/{args.model_type}_weights.pt')
+        torch.save(model.state_dict(), weight_filename)
+        wandb.finish()
 
     if args.mode == 'eval':
         print(f'Evaluating...')
