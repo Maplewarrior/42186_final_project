@@ -169,3 +169,7 @@ cython_debug/
 jobscript/env_vars.sh
 
 wandb/
+checkpoints/
+DDPM_samples/
+VAE_samples
+*.out
