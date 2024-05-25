@@ -2,6 +2,7 @@ data:
   H: 64 #40
   W: 64 #40
   channels: 3 #3
+  n_classes: 18
 
 training:
   n_epochs: 600
@@ -22,3 +23,4 @@ VAE:
 
 DDPM:
   T: 500
+  p_uncond: 0.1
