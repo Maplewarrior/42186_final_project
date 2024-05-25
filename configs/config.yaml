@@ -20,6 +20,7 @@ training:
 
 VAE:
   D: 128 # dimensionality of the latent space
+  num_components: 10 # ! Only for MoG and VampPrior
 
 DDPM:
   T: 500

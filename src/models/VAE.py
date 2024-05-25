@@ -109,12 +109,27 @@ class VAE(nn.Module):
         self.decoder = decoder
         self.prior = prior
 
+    def mc_elbo(self, x):
+        """
+        Compute the ELBO for the given batch of data.
+        """
+        q = self.encoder(x)
+        z = q.rsample() # reparameterization
+        RE = self.decoder(z).log_prob(x)
+        KL = q.log_prob(z) - self.prior().log_prob(z)
+        elbo = (RE - KL).mean()
+        return elbo
+
     def ELBO(self, x: torch.tensor):
+        if self.prior.__class__.__name__ in ['MixtureOfGaussiansPrior', "VampPrior"]:
+            return self.mc_elbo(x)
+        
         q = self.encoder(x)
         z = q.rsample() # reparameterization trick
         reconstruction = self.decoder(z).log_prob(x) # ln p(x|z)
         # KL_term = q.log_prob(z) - self.prior().log_prob(z)
         KL_term = KL(q, self.prior())
+        
         return (reconstruction - KL_term).mean(dim=0) # average over batch dimension
     
     def sample(self, n_samples: int):

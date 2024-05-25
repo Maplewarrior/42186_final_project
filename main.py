@@ -11,7 +11,7 @@ from src.training.trainer import Trainer
 from src.models.DDPM import DDPM
 from src.models.unet import UNet
 from src.models.VAE import VAE, GaussianEncoder, MultivariateGaussianDecoder
-from src.models.vae_priors import StdGaussianPrior
+from src.models.vae_priors import StdGaussianPrior, MixtureOfGaussiansPrior, VampPrior
 from src.utils.misc import load_config
 from src.visualizations.functions import denormalize, save_images
 from src.visualizations.plot_loss import plot_loss
@@ -19,20 +19,29 @@ import uuid
 
 import wandb
 
-def build_model(model_type: str, CFG: dict, device: str):
+def build_model(model_type: str, CFG: dict, device: str, vae_prior_type: str = 'std_gauss'):
     H = CFG['data']['H']
     W = CFG['data']['W']
     C = CFG['data']['channels']
     D = CFG['VAE']['D']
+    num_components = CFG['VAE']['num_components']
 
-    if model_type == 'VAE':        
-        prior = StdGaussianPrior(D)
+    if model_type == 'VAE':       
         encoder = GaussianEncoder(H, W, D)
         decoder = MultivariateGaussianDecoder(H, W, D)
+
+        # Make prior depending on the type chosen
+        if vae_prior_type == 'std_gauss': 
+            prior = StdGaussianPrior(D)
+        elif vae_prior_type == 'mog':
+            prior = MixtureOfGaussiansPrior(num_components=CFG['VAE']['num_components'], latent_dim=D)
+        elif vae_prior_type == 'vamp':
+            prior = VampPrior(num_components=num_components, H=H, W=W, C=C, encoder=encoder)
+
         model = VAE(encoder, decoder, prior).to(device)
     
     elif model_type == 'DDPM':
-        unet = UNet(img_size=H, c_in=C, c_out=C, device=device, n_classes=CFG['data']['n_classes']).to(device)
+        unet = UNet(img_size=H, c_in=C, c_out=C, device=device).to(device)
         model = DDPM(unet=unet, cfg=CFG, device=device).to(device)
 
     return model
@@ -73,6 +82,7 @@ if __name__ == '__main__':
     parser.add_argument('--model-type', type=str, default='VAE', choices=['VAE', 'DDPM'], help='What type of model to use (default: %(default)s)')
     parser.add_argument('--data-type', type=str, default='original', choices=['original', 'fusion', 'all'], help='What type of data to use (default: %(default)s)')
     parser.add_argument('--p-uncond', type=float, default=None, help='probability of doing unconditional sampling when training DDPM model. If None the value in config is kept.')
+    parser.add_argument('--vae-prior', type=str, default='std_gauss', choices=['std_gauss', 'mog', 'vamp'], help='What type of prior to use for VAE (default: %(default)s)')
     parser.add_argument('--wandb', action='store_true')
     args = parser.parse_args()
 
@@ -86,7 +96,7 @@ if __name__ == '__main__':
     if args.mode == 'train':
         print("Training...")
         ### initialize model
-        model = build_model(args.model_type, CFG, device)
+        model = build_model(args.model_type, CFG, device, vae_prior_type=args.vae_prior)
        
         ### initialize dataloader
         dataset = build_dataset(args.data_type, args.model_type)
@@ -100,12 +110,7 @@ if __name__ == '__main__':
         ### train model
         print("Starting training!")
         if args.wandb:
-            # start a new wandb run to track this script
-            wandb.init(
-                # set the wandb project where this run will be logged
-                project="MBMLexam",
-                # track hyperparameters and run metadata
-                config={
+            wand_cfg = {
                 "data-type": args.data_type,
                 "model-type": args.model_type,
                 "batch-size": CFG['training']['batch_size'],
@@ -113,8 +118,20 @@ if __name__ == '__main__':
                 "uid": uid,
                 "optimizer": CFG["training"]["optimization"]["optimizer_name"],
                 "learning-rate": CFG["training"]["optimization"][CFG["training"]["optimization"]["optimizer_name"]]["lr"],
-                "p-uncond": CFG['DDPM']['p_uncond']
-                }
+            }
+            if args.model_type == 'VAE':
+                wand_cfg["vae-prior"] = args.vae_prior
+                wand_cfg["num-components"] = CFG['VAE']['num_components']
+                wand_cfg["latent-dim"] = CFG['VAE']['D']
+            if args.model_type == 'DDPM':
+                wand_cfg["p-uncond"] = CFG['DDPM']['p_uncond']
+                wand_cfg["T"] = CFG['DDPM']['T']
+            # start a new wandb run to track this script
+            wandb.init(
+                # set the wandb project where this run will be logged
+                project="MBMLexam",
+                # track hyperparameters and run metadata
+                config=wand_cfg
             )
 
         if args.wandb:
@@ -132,7 +149,7 @@ if __name__ == '__main__':
 
     if args.mode == 'sample':
         import pdb
-        model = build_model(args.model_type, CFG, device)
+        model = build_model(args.model_type, CFG, device, vae_prior_type=args.vae_prior)
         if os.path.exists(f'weights/{args.model_type}_weights.pt'):
             sd = torch.load(f'weights/{args.model_type}_weights.pt', map_location=device)
             model.load_state_dict(sd)
