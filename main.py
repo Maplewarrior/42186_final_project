@@ -112,7 +112,8 @@ if __name__ == '__main__':
                 "weight-file": weight_filename,
                 "uid": uid,
                 "optimizer": CFG["training"]["optimization"]["optimizer_name"],
-                "learning-rate": CFG["training"]["optimization"][CFG["training"]["optimization"]["optimizer_name"]]["lr"]
+                "learning-rate": CFG["training"]["optimization"][CFG["training"]["optimization"]["optimizer_name"]]["lr"],
+                "p-uncond": CFG['DDPM']['p_uncond']
                 }
             )
 
