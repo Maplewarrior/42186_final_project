@@ -34,7 +34,7 @@ class DDPM(nn.Module):
         # apply noise to the input image
         x_noised = x * torch.sqrt(self.alpha_bar[t]) + eps * torch.sqrt(1 - self.alpha_bar[t])
         
-        if self.p_uncond < torch.rand(1).item(): # do uncoditional training with probability p_uncond
+        if self.p_uncond > torch.rand(1).item(): # do uncoditional training with probability p_uncond
             y = None
         
         # do noise prediction
