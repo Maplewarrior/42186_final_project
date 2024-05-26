@@ -55,11 +55,25 @@ def build_dataset(dataset_type: str, model_type: str = 'VAE'):
                     ]
     
     if dataset_type == 'original':
-        org_dir = 'data/processed'  
+        org_dir = 'data/raw'  
         labels = ['front', 'shiny'] 
-        games = ["emerald", "firered-leafgreen", "diamond-pearl", "heartgold-soulsilver", "black-white"]
-        dataset = PokemonDataset(org_dir, labels, games=games, transform=transforms.Compose(transform))
-        
+
+        # Split into two datasets
+        games1 = [ "emerald", "firered-leafgreen"]
+        games2 = ["diamond-pearl", "heartgold-soulsilver"]
+    
+        # One dataset with padding
+        t1 = [transforms.Pad(4, fill=255, padding_mode='constant'), ResizeSprite((64, 64))]
+        t1.extend(transform)
+        dataset1 = PokemonDataset(org_dir, labels, games=games1, transform=transforms.Compose(t1))
+        # One dataset without padding
+        t2 = [ResizeSprite((64, 64))]
+        t2.extend(transform)
+        dataset2 = PokemonDataset(org_dir, labels, games2, transform=transforms.Compose(t2))
+
+        # Merge into one dataset
+        dataset = torch.utils.data.ConcatDataset([dataset1, dataset2])
+
     
     elif dataset_type == 'fusion':
         fusion_dir = 'data/fusion'

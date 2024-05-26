@@ -33,6 +33,15 @@ clean:
 # PROJECT RULES                                                                 #
 #################################################################################
 
+DATA_TYPE = all
+VAE_PRIOR = std_gauss
+P_UNCOND = 0.1
+
+train-vae:
+	$(PYTHON_INTERPRETER) main.py train --model-type VAE --data-type $(DATA_TYPE) --vae-prior $(VAE_PRIOR)
+train-ddpm:
+	$(PYTHON_INTERPRETER) main.py train --model-type DDPM --data-type $(DATA_TYPE) --p-uncond $(P_UNCOND)
+
 get-data:
 	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/data_utils/get_data.py
 
