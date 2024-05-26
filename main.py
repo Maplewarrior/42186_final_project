@@ -104,6 +104,14 @@ if __name__ == '__main__':
     
     if args.p_uncond != None:
         CFG['DDPM']['p_uncond'] = args.p_uncond
+
+    # Fix to overwrite batch size and n_epochs for VAE and DDPM
+    if args.model_type == 'VAE':
+        CFG['training']['batch_size'] = CFG['VAE']['batch_size']
+        CFG['training']['n_epochs'] = CFG['VAE']['n_epochs']
+    elif args.model_type == 'DDPM':
+        CFG['training']['batch_size'] = CFG['DDPM']['batch_size']
+        CFG['training']['n_epochs'] = CFG['DDPM']['n_epochs']
     
     
     if args.mode == 'train':

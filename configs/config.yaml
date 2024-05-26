@@ -5,8 +5,8 @@ data:
   n_classes: 18
 
 training:
-  n_epochs: 600
-  batch_size: 24
+  n_epochs: 600 # ! Overwritten by the model specific config
+  batch_size: 24 # ! Overwritten by the model specific config
   optimization:
     optimizer_name: Adam # which optimizer to use during training
     Adam:
@@ -19,9 +19,13 @@ training:
       lr: 0.001
 
 VAE:
+  epochs: 600
+  batch_size: 64
   D: 128 # dimensionality of the latent space
   num_components: 10 # ! Only for MoG and VampPrior
 
 DDPM:
+  epochs: 600
+  batch_size: 24
   T: 500
   p_uncond: 0.1
