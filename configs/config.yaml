@@ -19,13 +19,13 @@ training:
       lr: 0.001
 
 VAE:
-  epochs: 600
+  n_epochs: 600
   batch_size: 64
   D: 128 # dimensionality of the latent space
   num_components: 10 # ! Only for MoG and VampPrior
 
 DDPM:
-  epochs: 600
+  n_epochs: 600
   batch_size: 24
   T: 500
   p_uncond: 0.1
