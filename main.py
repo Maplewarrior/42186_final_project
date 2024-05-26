@@ -41,9 +41,8 @@ def build_model(model_type: str, CFG: dict, device: str, vae_prior_type: str = '
         model = VAE(encoder, decoder, prior).to(device)
     
     elif model_type == 'DDPM':
-        unet = UNet(img_size=H, c_in=C, c_out=C, device=device).to(device)
+        unet = UNet(img_size=H, c_in=C, c_out=C, device=device, n_classes=18).to(device)
         model = DDPM(unet=unet, cfg=CFG, device=device).to(device)
-
     return model
 
 def build_dataset(dataset_type: str, model_type: str = 'VAE'):
