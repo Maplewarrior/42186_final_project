@@ -93,13 +93,14 @@ class Trainer:
                                   'optimizer': self.optimizer.state_dict(),
                                   'config': self.CFG}
                     if self.model.name == "DDPM":
+                        os.makedirs(f"VAE_samples/{self.uuid}/", exist_ok=True)
                         checkpoint_path = f'checkpoints/DDPM/{self.uuid}/checkpoint_{epoch}epochs.pt'
                     elif self.model.name == "VAE":
                         checkpoint_path = f'checkpoints/VAE/{self.uuid}/checkpoint_{epoch}epochs.pt'
                     else:
                         checkpoint_path = f'checkpoints/{self.uuid}/checkpoint_{epoch}epochs.pt'
 
-                    os.makedirs(f"checkpoints/{self.uuid}/", exist_ok=True)
+                    os.makedirs(checkpoint_path, exist_ok=True)
                     torch.save(checkpoint, checkpoint_path)
 
         return losses
