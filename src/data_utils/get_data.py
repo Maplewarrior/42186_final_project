@@ -33,12 +33,24 @@ def download_data(dataset_urls, data_raw_path):
             print(f"File {filename} already exists, skipping download") 
 
 
-def resize_image_with_white_background(filepath, new_path, size, padding_ratio=0.01):
+def resize_image_with_white_background(filepath, new_path, size, resample_type="NEAREST"):
+    # Mapping resampling types to PIL constants
+    resample_methods = {
+        "LANCZOS": Image.Resampling.LANCZOS,
+        "NEAREST": Image.Resampling.NEAREST,
+        "BILINEAR": Image.Resampling.BILINEAR,
+        "BICUBIC": Image.Resampling.BICUBIC,
+        "HAMMING": Image.Resampling.HAMMING
+    }
+    
     # Load the image
     img = Image.open(filepath).convert("RGBA")
     
-    # Resize the cropped image using LANCZOS resampling for high quality
-    img_resized = img.resize((size, size), Image.Resampling.LANCZOS)
+    # Get the appropriate resampling method, defaulting to NEAREST if not found
+    resample_method = resample_methods.get(resample_type, Image.Resampling.NEAREST)
+    
+    # Resize the image using the specified resampling method
+    img_resized = img.resize((size, size), resample_method)
     
     # Create a new white background image
     white_bg = Image.new('RGBA', (size, size), 'WHITE')
@@ -46,7 +58,7 @@ def resize_image_with_white_background(filepath, new_path, size, padding_ratio=0
     # Remove alpha from the resized image by compositing it over a white background
     alpha_composite = Image.alpha_composite(white_bg, img_resized)
     
-    # Convert back to RGB to discard alpha channel
+    # Convert back to RGB to discard the alpha channel
     final_img = alpha_composite.convert("RGB")
 
     # Save the image with a white background
@@ -62,7 +74,7 @@ def process_subfolder(folderpath, new_folderpath, size):
         if filename.endswith('.png'):
             filepath = os.path.join(folderpath, filename)
             new_path = os.path.join(new_folderpath, filename)
-            resize_image_with_white_background(filepath, new_path, size)
+            resize_image_with_white_background(filepath, new_path, size, resample_type="NEAREST")
 
 def resize_images(data_raw_path, data_processed_path, size=40):
     for gen in range(1, 6):
