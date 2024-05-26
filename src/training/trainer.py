@@ -100,7 +100,7 @@ class Trainer:
                     else:
                         checkpoint_path = f'checkpoints/{self.uuid}/checkpoint_{epoch}epochs.pt'
 
-                    os.makedirs(checkpoint_path, exist_ok=True)
+                    os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
                     torch.save(checkpoint, checkpoint_path)
 
         return losses
