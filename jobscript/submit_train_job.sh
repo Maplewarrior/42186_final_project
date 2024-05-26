@@ -2,13 +2,14 @@
 
 # Check if an experiment name was provided
 if [ "$#" -ne 2 ] && [ "$#" -ne 3 ]; then
-    echo "Usage: $0 MODEL DATATYPE [P_UNCOND_DDPM]"
+    echo "Usage: $0 MODEL DATATYPE [P_UNCOND_DDPM/VAE_PRIOR]"
     exit 1
 fi
 
 # The first argument is the experiment name
 MODEL="$1"
 DATATYPE="$2"
+
 
 # Source your environment variables
 source ./env_vars.sh
@@ -22,9 +23,14 @@ TEMP_JOB_SCRIPT="./jobscript_populated.sh"
 
 # Optionally provide two additional arguments for the loss_type and the model_type
 if [ "$#" -eq 3 ]; then
-    P_UNCOND="$3"
-    # Assign the loss and model types to variables
-    RUN_EXPERIMENTS_ARGS="--model-type ${MODEL} --data-type ${DATATYPE} --wandb --p-uncond ${P_UNCOND}"
+    if [[ "${MODEL}" == "DDPM" ]]; then
+        P_UNCOND="$3"
+        # Assign the loss and model types to variables
+        RUN_EXPERIMENTS_ARGS="--model-type ${MODEL} --data-type ${DATATYPE} --wandb --p-uncond ${P_UNCOND}"
+    else 
+        VAE_PRIOR="$3"
+        RUN_EXPERIMENTS_ARGS="--model-type ${MODEL} --data-type ${DATATYPE} --wandb --vae-prior ${VAE_PRIOR}"
+    fi
 else 
     RUN_EXPERIMENTS_ARGS="--model-type ${MODEL} --data-type ${DATATYPE} --wandb"
 fi
