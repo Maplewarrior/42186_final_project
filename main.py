@@ -156,9 +156,9 @@ if __name__ == '__main__':
             )
 
         if args.wandb:
-            trainer = Trainer(model, train_loader, config_path='configs/config.yaml', device=device, uuid=uid, wandb=wandb)
+            trainer = Trainer(model, train_loader, config=CFG, device=device, uuid=uid, wandb=wandb)
         else:
-            trainer = Trainer(model, train_loader, config_path='configs/config.yaml', device=device, uuid=uid)
+            trainer = Trainer(model, train_loader, config=CFG, device=device, uuid=uid)
         losses = trainer.train()
         plot_loss(losses, args.model_type) # save plot of losses
         torch.save(model.state_dict(), weight_filename)

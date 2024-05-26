@@ -28,9 +28,9 @@ def denormalize(x):
     return x
 
 class Trainer:
-    def __init__(self, model, train_loader, config_path: str, device: str, uuid: str, wandb: wandb = None) -> None:
+    def __init__(self, model, train_loader, config: dict, device: str, uuid: str, wandb: wandb = None) -> None:
         self.device=device
-        self.CFG = load_config(config_path)
+        self.CFG = config
         self.n_classes = self.CFG['data']['n_classes']
         self.row_idxs = list(range(self.CFG['training']['batch_size']))
         self.model = model
