@@ -70,7 +70,7 @@ class Trainer:
                     self.optimizer.step()
                     losses.append(loss.item())
                     if self.wandb: wandb.log({"epoch": epoch, "loss": sum(losses)/len(losses)})
-                    pbar.set_postfix({'Current loss': sum(losses)/len(losses)}, refresh=True)
+                    pbar.set_postfix({'Epoch': epoch, 'Current loss': sum(losses)/len(losses)}, refresh=True)
                     pbar.update(1)
                 
                 if (epoch+1) % 50 == 0:
