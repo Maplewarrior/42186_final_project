@@ -63,7 +63,7 @@ class DDPM(nn.Module):
             else:
                 z = torch.zeros_like(z)
   
-            eps = self.unet(x, t)
+            eps = self.unet(x, t, y)
             mu = (x - (1 - self.alphas[t]) / (torch.sqrt(1 - self.alpha_bar[t])) * eps) / torch.sqrt(self.alphas[t])
             noise = torch.sqrt(self.sigmas[t]) * z
             
