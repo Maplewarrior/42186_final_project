@@ -15,9 +15,11 @@ from src.models.vae_priors import StdGaussianPrior, MixtureOfGaussiansPrior, Vam
 from src.utils.misc import load_config
 from src.visualizations.functions import denormalize, save_images
 from src.visualizations.plot_loss import plot_loss
+from src.data_utils.metadata import PokemonMetaData
 import uuid
 
 import wandb
+
 
 def build_model(model_type: str, CFG: dict, device: str, vae_prior_type: str = 'std_gauss'):
     H = CFG['data']['H']
@@ -81,7 +83,6 @@ def build_dataset(dataset_type: str, model_type: str = 'VAE'):
         fusion_transforms.extend(transform)
         dataset = PokemonFusionDataset(fusion_dir, transform=transforms.Compose(fusion_transforms))
         
-    
     elif dataset_type == 'all':
         org_dataset = build_dataset('original')
         fusion_dataset = build_dataset('fusion')
@@ -99,6 +100,7 @@ if __name__ == '__main__':
     parser.add_argument('--load-weights', type=str, default=None, help='Path to weights to load for model')
     parser.add_argument('--num-samples', type=int, default=32, help='Number of samples to generate')
     parser.add_argument('--sample-batch-size', default=32, type=int, help='Batch size for sampling')
+    parser.add_argument('--class-cond', type=str, default=None, help='Which class to use for conditional sampling for the DDPM model. If set to None, unconditional sampling is performed (default: %(default)s)')
     parser.add_argument('--wandb', action='store_true')
     args = parser.parse_args()
 
@@ -199,9 +201,19 @@ if __name__ == '__main__':
         model.eval()
         for i in range(n_batches):
             with torch.no_grad():
-                samples = model.sample(n_samples=batch_size)
+                metadata = PokemonMetaData(types_path='data/types.csv')
+                class2idx = metadata.types_dict
+                if (args.class_cond != None) and (args.class_cond in class2idx.keys()):
+                    y = torch.zeros((args.num_samples, CFG['data']['n_classes']), device=model.device)
+                    y[:, class2idx[args.class_cond]] = 1
+                else:
+                    print("Sampling DDPM unconditionally!")
+                    y = None
+
+                samples = model.sample(n_samples=args.num_samples, y=y)
+
+            if args.model_type == 'DDPM':
                 
-            if args.model_type == 'DDPM': 
                 sample = denormalize(samples)
 
                 # TODO If DDPM conditional, we need to add the condition to the samples
@@ -209,8 +221,6 @@ if __name__ == '__main__':
             # Now save the samples
             os.makedirs(f'samples/{args.model_type}/{uid}/', exist_ok=True)
             torch.save(samples, f'samples/{args.model_type}/{uid}/{batch_size}_samples_{i}.pt')
-
-   
 
         
 
