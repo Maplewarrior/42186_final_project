@@ -96,6 +96,8 @@ if __name__ == '__main__':
     parser.add_argument('--data-type', type=str, default='original', choices=['original', 'fusion', 'all'], help='What type of data to use (default: %(default)s)')
     parser.add_argument('--p-uncond', type=float, default=None, help='probability of doing unconditional sampling when training DDPM model. If None the value in config is kept.')
     parser.add_argument('--vae-prior', type=str, default='std_gauss', choices=['std_gauss', 'mog', 'vamp'], help='What type of prior to use for VAE (default: %(default)s)')
+    parser.add_argument('--load-weights', type=str, default=None, help='Path to weights to load for model')
+    parser.add_argument('--num-samples', type=int, default=32, help='Number of samples to generate')
     parser.add_argument('--wandb', action='store_true')
     args = parser.parse_args()
 
@@ -170,30 +172,44 @@ if __name__ == '__main__':
 
     if args.mode == 'sample':
         import pdb
-        model = build_model(args.model_type, CFG, device, vae_prior_type=args.vae_prior)
-        if os.path.exists(f'weights/{args.model_type}_weights.pt'):
-            sd = torch.load(f'weights/{args.model_type}_weights.pt', map_location=device)
-            model.load_state_dict(sd)
-            print(f'Sampling using weights: {args.model_type}_weights.pt')
 
+        model = build_model(args.model_type, CFG, device, vae_prior_type=args.vae_prior)
+
+        model_path = args.load_weights
+        if os.path.exists(model_path):
+            sd = torch.load(model_path, map_location=device)
+            # If the state dict is nested
+            if type(sd) == dict:
+                uid = model_path.split("/")[-2]
+                sd = sd['model']
+            else:
+                pdb.set_trace()
+                uid = model_path.split('_')[-1].split('.')[0]
+
+            loaded = model.load_state_dict(sd)
+            print(f'Sampling using weights: {model_path}')
         else:
             print(f'Warning! No state dict is loaded for model {args.model_type} when sampling.\nProcedding without loading pretrained weights...')
         
+        num_samples = args.num_samples
+        batch_size = 32
+        # Generate a total of num_samples samples
+        n_batches = num_samples // batch_size
         model.eval()
-        with torch.no_grad():
-            samples = model.sample(n_samples=32)
-            
-            # if args.model_type == 'DDPM':
-            #     samples = (samples.clamp(-1, 1) + 1) / 2
-            #     samples *= 255
-        
-        if args.model_type == 'VAE':        
-            save_image(samples, fp=f'figures/{args.model_type}_samples.png')
-        else: ### DDPM
-            save_images(denormalize(samples), path=f'figures/{args.model_type}_samples.png', title='DDPM samples')
+        for i in range(n_batches):
+            with torch.no_grad():
+                samples = model.sample(n_samples=32)
+                
+            if args.model_type == 'DDPM': 
+                sample = denormalize(samples)
 
+                # TODO If DDPM conditional, we need to add the condition to the samples
 
+            # Now save the samples
+            os.makedirs(f'samples/{args.model_type}/{uid}/', exist_ok=True)
+            torch.save(samples, f'samples/{args.model_type}/{uid}/{batch_size}_samples_{i}.pt')
 
+   
 
         
 

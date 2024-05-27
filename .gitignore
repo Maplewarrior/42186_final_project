@@ -173,3 +173,6 @@ checkpoints/
 DDPM_samples/
 VAE_samples
 *.out
+
+samples/
+weights/

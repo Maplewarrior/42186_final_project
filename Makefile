@@ -36,11 +36,23 @@ clean:
 DATA_TYPE = all
 VAE_PRIOR = std_gauss
 P_UNCOND = 0.1
+MODEL_WEIGHTS = weights/DDPM_weights_344b68a7-1516-411d-898b-fb3a643dfb02.pt
+# MODEL_WEIGHTS = checkpoints/DDPM/344b68a7-1516-411d-898b-fb3a643dfb02/checkpoint_599epochs.pt
+MODEL_WEIGHTS = checkpoints/VAE/f05c86aa-7700-4020-bd6d-51f0a99dc598/checkpoint_399epochs.pt
 
 train-vae:
 	$(PYTHON_INTERPRETER) main.py train --model-type VAE --data-type $(DATA_TYPE) --vae-prior $(VAE_PRIOR)
+
 train-ddpm:
 	$(PYTHON_INTERPRETER) main.py train --model-type DDPM --data-type $(DATA_TYPE) --p-uncond $(P_UNCOND)
+
+sample-vae:
+	$(PYTHON_INTERPRETER) main.py sample --model-type VAE --data-type $(DATA_TYPE) --vae-prior $(VAE_PRIOR) \
+	 --load-weights $(MODEL_WEIGHTS) --num-samples 1000
+
+sample-ddpm:
+	$(PYTHON_INTERPRETER) main.py sample --model-type DDPM --data-type $(DATA_TYPE) --p-uncond $(P_UNCOND) \
+	--load-weights $(MODEL_WEIGHTS) --num-samples 1000
 
 get-data:
 	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/data_utils/get_data.py
@@ -50,6 +62,9 @@ scrape-fusion-data:
 
 test-dataloader:
 	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/data_utils/dataloader.py
+
+test-samples-dataloader:
+	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/data_utils/samples_dataloader.py
 
 test-metadata:
 	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/data_utils/metadata.py
