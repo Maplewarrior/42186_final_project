@@ -51,8 +51,12 @@ sample-vae:
 	 --num-samples 10000 $(ARGS)
 
 sample-ddpm:
-	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/main.py sample --model-type DDPM --data-type $(DATA_TYPE) --p-uncond $(P_UNCOND) \
-	--num-samples 10000 $(ARGS)
+	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/main.py sample --model-type DDPM --data-type $(DATA_TYPE) \
+	--p-uncond $(P_UNCOND) --num-samples 10000 $(ARGS)
+
+sample-cond:
+	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/main.py sample-cond --model-type DDPM --data-type $(DATA_TYPE) \
+	--p-uncond 1.0 --num-samples 10000 $(ARGS)
 
 get-data:
 	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/data_utils/get_data.py

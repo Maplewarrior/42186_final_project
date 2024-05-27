@@ -92,7 +92,7 @@ def build_dataset(dataset_type: str, model_type: str = 'VAE'):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('mode', type=str, default='train', choices=['train', 'sample', 'eval'], help='what to do when running the script (default: %(default)s)')
+    parser.add_argument('mode', type=str, default='train', choices=['train', 'sample', 'eval', 'sample-cond'], help='what to do when running the script (default: %(default)s)')
     parser.add_argument('--model-type', type=str, default='VAE', choices=['VAE', 'DDPM'], help='What type of model to use (default: %(default)s)')
     parser.add_argument('--data-type', type=str, default='original', choices=['original', 'fusion', 'all'], help='What type of data to use (default: %(default)s)')
     parser.add_argument('--p-uncond', type=float, default=None, help='probability of doing unconditional sampling when training DDPM model. If None the value in config is kept.')
@@ -222,8 +222,60 @@ if __name__ == '__main__':
             os.makedirs(f'samples/{args.model_type}/{uid}/', exist_ok=True)
             torch.save(samples, f'samples/{args.model_type}/{uid}/{batch_size}_samples_{i}.pt')
 
-        
+    if args.mode == "sample-cond":
+        metadata = PokemonMetaData(types_path='data/types.csv')
+        model = build_model(args.model_type, CFG, device, vae_prior_type=args.vae_prior)
 
-            
+        model_path = args.load_weights
+        if os.path.exists(model_path):
+            sd = torch.load(model_path, map_location=device)
+            # If the state dict is nested
+            if type(sd) == dict:
+                uid = model_path.split("/")[-2]
+                sd = sd['model']
+            else:
+                uid = model_path.split('_')[-1].split('.')[0]
+
+            loaded = model.load_state_dict(sd)
+            print(f'Sampling using weights: {model_path}')
+        else:
+            print(f'Warning! No state dict is loaded for model {args.model_type} when sampling.\nProcedding without loading pretrained weights...')
+        # get class distribution
+
+        type_counts = {k: 0 for k in metadata.types_dict.keys()}
+        idx_to_label = {v: k for k, v in metadata.types_dict.items()}
+        dataset = build_dataset(args.data_type, args.model_type)
+        for _, lab in dataset:
+            type_counts[idx_to_label[lab]] += 1
         
-    
+        num_samples = args.num_samples
+
+        # calculate how many samples to generate for each class for a total of num_samples
+        samples_per_class = {k: int(num_samples * v / len(dataset)) for k, v in type_counts.items()}
+
+        batch_size = args.sample_batch_size
+
+        # how many batches to generate per class
+        batches_per_class = {k: v // batch_size for k, v in samples_per_class.items()}
+
+        for type, n_batches in batches_per_class.items():
+                model.eval()
+                for i in range(n_batches):
+                    with torch.no_grad():
+                        class2idx = metadata.types_dict
+                        if (type != None) and (type in class2idx.keys()):
+                            y = torch.zeros((args.num_samples, CFG['data']['n_classes']), device=model.device)
+                            y[:, class2idx[type]] = 1
+                        else:
+                            print("Sampling DDPM unconditionally!")
+                            y = None
+                        samples = model.sample(n_samples=args.num_samples, y=y)
+
+                    if args.model_type == 'DDPM':
+                        samples = denormalize(samples)
+
+                        # TODO If DDPM conditional, we need to add the condition to the samples
+
+                    # Now save the samples
+                    os.makedirs(f'samples/{args.model_type}/{uid}/{type}/', exist_ok=True)
+                    torch.save(samples, f'samples/{args.model_type}/{uid}/{type}/{batch_size}_samples_{i}.pt')
