@@ -9,6 +9,18 @@ import pdb
 def divide_by_255(x):
     return x / 255.0
 
+# Function to extract the sorting key
+def extract_key(filename):
+    # Remove the file extension
+    filename = os.path.splitext(filename)[0]
+    # Check if the filename is an integer
+    if filename.split('-')[0].isdigit():
+        # Return a tuple with 0 to ensure integers come first and the integer value
+        return (0, int(filename.split('-')[0]))
+    else:
+        # Return a tuple with 1 to ensure strings come after integers and the filename
+        return (1, filename)
+
 class PokemonDataset(Dataset):
     def __init__(self, root_dir, labels=None, games=None, transform=None):
         """
@@ -50,7 +62,8 @@ class PokemonDataset(Dataset):
                         else:
                             label_path = os.path.join(version_path, label)
                         if os.path.isdir(label_path):
-                            for img_file in os.listdir(label_path):
+                            # sort label_path by id
+                            for img_file in sorted(os.listdir(label_path), key=extract_key):
                                 if img_file.endswith('.png'):
                                     # pdb.set_trace()
                                     image_name = img_file.split('.')[0]

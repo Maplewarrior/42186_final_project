@@ -6,43 +6,40 @@ from torchvision.models import inception_v3, Inception_V3_Weights
 import os
 from tqdm import tqdm
 from src.data_utils.dataloader import PokemonFusionDataset, PokemonDataset
+from src.data_utils.samples_dataloader import SamplesDataset
+from src.main import build_dataset
 from torch.utils.data import DataLoader, Subset
 from torchvision import transforms
 # %%
 if __name__ == "__main__":
-    # import argparse
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('--sample-folder', type=str, help='path to the folder containing the sampled images')
-    # parser.add_argument('--device', type=str, default="cpu", help='device to use (default: %(default)s)')
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--samples-folder', type=str, help='Path to the folder containing the samples')
 
-    # args = parser.parse_args()
+    args = parser.parse_args()
+
     # device = torch.device(args.device)
     device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 
-    # Define the transformation pipeline
+    # Get thte real dataset
+    real_dataset = build_dataset('all')
+
+
     trans = transforms.Compose([
+        # transform to PIL
+        transforms.ToPILImage(),
         transforms.Resize(299),
         transforms.CenterCrop(299),
-        # transforms.ToTensor(),
-        # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        transforms.ToTensor(),  # Convert images to tensors in the range [0, 1]
+        # make it between 0 and 1
+        transforms.ToTensor()
     ])
 
-
-    root_folder = "../data/fusion"
-    real_dataset = PokemonFusionDataset(root_folder, transform=trans)
+    samples_folder = args.samples_folder
+    generated_dataset = SamplesDataset(samples_folder, transform=trans, device=device)
     
-    # Create indices for each subset
-    indices_label_0 = [i for i, (_, label) in enumerate(real_dataset) if label == 0]
-    indices_label_1 = [i for i, (_, label) in enumerate(real_dataset) if label == 6]
-
-    # Create subsets using the indices
-    subset_label_0 = Subset(real_dataset, indices_label_0)
-    subset_label_1 = Subset(real_dataset, indices_label_1)
-
     # Create DataLoaders for the generated and real images
-    generated_images_dataloader = DataLoader(subset_label_0, batch_size=32, shuffle=False)
-    real_images_dataloader = DataLoader(subset_label_1, batch_size=32, shuffle=False)
+    generated_images_dataloader = DataLoader(generated_dataset, batch_size=32, shuffle=False)
+    real_images_dataloader = DataLoader(real_dataset, batch_size=32, shuffle=False)
 
     # Load the pretrained Inception v3 model
     inception_model = inception_v3(weights=Inception_V3_Weights.IMAGENET1K_V1).to(device)

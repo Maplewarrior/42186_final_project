@@ -5,12 +5,14 @@ from src.data_utils.metadata import PokemonMetaData
 import pdb
 
 class SamplesDataset(Dataset):
-    def __init__(self, root_dir):
+    def __init__(self, root_dir, transform=None, device='cpu'):
         self.root_dir = root_dir
         self.data_files = []
         self.labels = []
         self.metadata = PokemonMetaData()
         self.label_to_idx = self.metadata.types_dict
+        self.transform = transform
+        self.device = device
         self._load_files()
 
     def _load_files(self):
@@ -20,7 +22,7 @@ class SamplesDataset(Dataset):
                     label = os.path.basename(root)
                     file_path = os.path.join(root, file)
                     batch_size = int(file.split('_')[0])
-                    data = torch.load(file_path)
+                    data = torch.load(file_path, map_location=self.device)
                     if len(data) != batch_size:
                         raise ValueError(f"Batch size mismatch in file {file_path}")
                     for i in range(batch_size):
@@ -41,11 +43,14 @@ class SamplesDataset(Dataset):
     def __getitem__(self, idx):
         data = self.data_files[idx]
         label = self.labels[idx]
+
+        if self.transform:
+            data = self.transform(data)
         return data, label
     
 if __name__ == "__main__":
     vae_dataset = SamplesDataset('samples/VAE/f05c86aa-7700-4020-bd6d-51f0a99dc598')
     data_loader = torch.utils.data.DataLoader(vae_dataset, batch_size=10, shuffle=True)
-    
+
     pdb.set_trace()
 
