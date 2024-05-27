@@ -6,6 +6,8 @@ from torchvision.models import inception_v3, Inception_V3_Weights
 import os
 from tqdm import tqdm
 from src.data_utils.dataloader import PokemonFusionDataset, PokemonDataset
+from src.data_utils.samples_dataloader import SamplesDataset
+from src.main import build_dataset
 from torch.utils.data import DataLoader, Subset
 from torchvision import transforms
 # %%
@@ -29,20 +31,33 @@ if __name__ == "__main__":
     ])
 
 
-    root_folder = "../data/fusion"
+    root_folder = "./data/fusion"
     real_dataset = PokemonFusionDataset(root_folder, transform=trans)
-    
-    # Create indices for each subset
-    indices_label_0 = [i for i, (_, label) in enumerate(real_dataset) if label == 0]
-    indices_label_1 = [i for i, (_, label) in enumerate(real_dataset) if label == 6]
+    real_dataset = build_dataset('all')
 
-    # Create subsets using the indices
-    subset_label_0 = Subset(real_dataset, indices_label_0)
-    subset_label_1 = Subset(real_dataset, indices_label_1)
+
+    trans = transforms.Compose([
+        # transform to PIL
+        transforms.ToPILImage(),
+        transforms.Resize(299),
+        transforms.CenterCrop(299),
+        # make it between 0 and 1
+        transforms.ToTensor()
+    ])
+
+    generated_dataset = SamplesDataset("samples/VAE/f05c86aa-7700-4020-bd6d-51f0a99dc598", transform=trans)
+    
+    # # Create indices for each subset
+    # indices_label_0 = [i for i, (_, label) in enumerate(real_dataset) if label == 0]
+    # indices_label_1 = [i for i, (_, label) in enumerate(real_dataset) if label == 6]
+
+    # # Create subsets using the indices
+    # subset_label_0 = Subset(real_dataset, indices_label_0)
+    # subset_label_1 = Subset(real_dataset, indices_label_1)
 
     # Create DataLoaders for the generated and real images
-    generated_images_dataloader = DataLoader(subset_label_0, batch_size=32, shuffle=False)
-    real_images_dataloader = DataLoader(subset_label_1, batch_size=32, shuffle=False)
+    generated_images_dataloader = DataLoader(real_dataset, batch_size=32, shuffle=False)
+    real_images_dataloader = DataLoader(generated_dataset, batch_size=32, shuffle=False)
 
     # Load the pretrained Inception v3 model
     inception_model = inception_v3(weights=Inception_V3_Weights.IMAGENET1K_V1).to(device)
