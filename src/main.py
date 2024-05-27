@@ -98,6 +98,7 @@ if __name__ == '__main__':
     parser.add_argument('--vae-prior', type=str, default='std_gauss', choices=['std_gauss', 'mog', 'vamp'], help='What type of prior to use for VAE (default: %(default)s)')
     parser.add_argument('--load-weights', type=str, default=None, help='Path to weights to load for model')
     parser.add_argument('--num-samples', type=int, default=32, help='Number of samples to generate')
+    parser.add_argument('--sample-batch-size', default=32, type=int, help='Batch size for sampling')
     parser.add_argument('--wandb', action='store_true')
     args = parser.parse_args()
 
@@ -192,13 +193,13 @@ if __name__ == '__main__':
             print(f'Warning! No state dict is loaded for model {args.model_type} when sampling.\nProcedding without loading pretrained weights...')
         
         num_samples = args.num_samples
-        batch_size = 32
+        batch_size = args.sample_batch_size
         # Generate a total of num_samples samples
         n_batches = num_samples // batch_size
         model.eval()
         for i in range(n_batches):
             with torch.no_grad():
-                samples = model.sample(n_samples=32)
+                samples = model.sample(n_samples=batch_size)
                 
             if args.model_type == 'DDPM': 
                 sample = denormalize(samples)

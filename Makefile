@@ -41,18 +41,18 @@ MODEL_WEIGHTS = weights/DDPM_weights_344b68a7-1516-411d-898b-fb3a643dfb02.pt
 MODEL_WEIGHTS = checkpoints/VAE/f05c86aa-7700-4020-bd6d-51f0a99dc598/checkpoint_399epochs.pt
 
 train-vae:
-	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/main.py train --model-type VAE --data-type $(DATA_TYPE) --vae-prior $(VAE_PRIOR)
+	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/main.py train --model-type VAE --data-type $(DATA_TYPE) --vae-prior $(VAE_PRIOR) 
 
 train-ddpm:
 	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/main.py train --model-type DDPM --data-type $(DATA_TYPE) --p-uncond $(P_UNCOND)
 
 sample-vae:
-	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/main.py sample --model-type VAE --data-type $(DATA_TYPE) --vae-prior $(VAE_PRIOR) \
-	 --load-weights $(MODEL_WEIGHTS) --num-samples 1000
+	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/main.py sample --model-type VAE --data-type $(DATA_TYPE) \
+	 --num-samples 10000 $(ARGS)
 
 sample-ddpm:
 	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/main.py sample --model-type DDPM --data-type $(DATA_TYPE) --p-uncond $(P_UNCOND) \
-	--load-weights $(MODEL_WEIGHTS) --num-samples 1000
+	--num-samples 10000 $(ARGS)
 
 get-data:
 	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/data_utils/get_data.py
@@ -77,6 +77,6 @@ get-fusion-data:
 	rm data/fusion.zip
 	rm -rf data/__MACOSX
 	
-# This is just an example implementation so far
+# This is just an example implementation so far, with args
 calculate-fid:
-	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/calculate_fid.py
+	$(PYTHON_INTERPRETER) $(PROJECT_NAME)/calculate_fid.py $(ARGS)
