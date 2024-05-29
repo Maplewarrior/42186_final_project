@@ -29,11 +29,11 @@ TEMP_JOB_SCRIPT="./jobscript_populated_sample.sh"
 
 
 # Optionally provide two additional arguments for the loss_type and the model_type
-if [ "$#" -eq 4 ]; then
+if [ "$#" -eq 5 ]; then
     VAE_PRIOR="$4"
-    RUN_EXPERIMENTS_ARGS="--model-type ${MODEL_TYPE} --load-weights ${MODEL_WEIGHTS} --batch-size ${BATCH_SIZE} --p-uncond 0.1 --num-samples 10000 --vae-prior ${VAE_PRIOR}"
+    RUN_EXPERIMENTS_ARGS="--model-type ${MODEL_TYPE} --load-weights ${MODEL_WEIGHTS} --sample-batch-size ${BATCH_SIZE} --p-uncond 0.1 --num-samples 10000 --vae-prior ${VAE_PRIOR}"
 else 
-    RUN_EXPERIMENTS_ARGS="--model-type ${MODEL_TYPE} --load-weights ${MODEL_WEIGHTS} --batch-size ${BATCH_SIZE} --p-uncond 0.1 --num-samples 10000"
+    RUN_EXPERIMENTS_ARGS="--model-type ${MODEL_TYPE} --load-weights ${MODEL_WEIGHTS} --sample-batch-size ${BATCH_SIZE} --p-uncond 0.1 --num-samples 10000"
 fi
 
 # Replace placeholders in the template with actual environment variable values and the experiment name
