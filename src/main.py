@@ -17,6 +17,7 @@ from src.visualizations.functions import denormalize, save_images
 from src.visualizations.plot_loss import plot_loss
 from src.data_utils.metadata import PokemonMetaData
 import uuid
+from tqdm import tqdm
 
 import wandb
 
@@ -186,7 +187,6 @@ if __name__ == '__main__':
                 uid = model_path.split("/")[-2]
                 sd = sd['model']
             else:
-                pdb.set_trace()
                 uid = model_path.split('_')[-1].split('.')[0]
 
             loaded = model.load_state_dict(sd)
@@ -194,6 +194,8 @@ if __name__ == '__main__':
         else:
             print(f'Warning! No state dict is loaded for model {args.model_type} when sampling.\nProcedding without loading pretrained weights...')
         
+        metadata = PokemonMetaData(types_path='data/types.csv')
+
         num_samples = args.num_samples
         batch_size = args.sample_batch_size
         # Generate a total of num_samples samples
@@ -201,22 +203,18 @@ if __name__ == '__main__':
         model.eval()
         for i in range(n_batches):
             with torch.no_grad():
-                metadata = PokemonMetaData(types_path='data/types.csv')
                 class2idx = metadata.types_dict
                 if (args.class_cond != None) and (args.class_cond in class2idx.keys()):
-                    y = torch.zeros((args.num_samples, CFG['data']['n_classes']), device=model.device)
+                    y = torch.zeros((batch_size, CFG['data']['n_classes']), device=model.device)
                     y[:, class2idx[args.class_cond]] = 1
                 else:
                     print("Sampling DDPM unconditionally!")
                     y = None
 
-                samples = model.sample(n_samples=args.num_samples, y=y)
+                samples = model.sample(n_samples=batch_size, y=y)
 
             if args.model_type == 'DDPM':
-                
-                sample = denormalize(samples)
-
-                # TODO If DDPM conditional, we need to add the condition to the samples
+                samples = denormalize(samples)
 
             # Now save the samples
             os.makedirs(f'samples/{args.model_type}/{uid}/', exist_ok=True)
@@ -259,17 +257,19 @@ if __name__ == '__main__':
         batches_per_class = {k: v // batch_size for k, v in samples_per_class.items()}
 
         for type, n_batches in batches_per_class.items():
+                if type in ["Bug", "Dark", "Dragon", "Electric", "Fairy", "Fighting", "Fire", "Flying", "Ghost", "Grass", "Ground", "Ice", "Normal"]:
+                    continue
                 model.eval()
-                for i in range(n_batches):
+                for i in tqdm(range(n_batches), desc=f"Processing {type} batches"):
                     with torch.no_grad():
                         class2idx = metadata.types_dict
                         if (type != None) and (type in class2idx.keys()):
-                            y = torch.zeros((args.num_samples, CFG['data']['n_classes']), device=model.device)
+                            y = torch.zeros((batch_size, CFG['data']['n_classes']), device=model.device)
                             y[:, class2idx[type]] = 1
                         else:
                             print("Sampling DDPM unconditionally!")
                             y = None
-                        samples = model.sample(n_samples=args.num_samples, y=y)
+                        samples = model.sample(n_samples=batch_size, y=y)
 
                     if args.model_type == 'DDPM':
                         samples = denormalize(samples)
@@ -277,5 +277,5 @@ if __name__ == '__main__':
                         # TODO If DDPM conditional, we need to add the condition to the samples
 
                     # Now save the samples
-                    os.makedirs(f'samples/{args.model_type}/{uid}/{type}/', exist_ok=True)
-                    torch.save(samples, f'samples/{args.model_type}/{uid}/{type}/{batch_size}_samples_{i}.pt')
+                    os.makedirs(f'samples_cond/{args.model_type}/{uid}/{type}/', exist_ok=True)
+                    torch.save(samples, f'samples_cond/{args.model_type}/{uid}/{type}/{batch_size}_samples_{i}.pt')
