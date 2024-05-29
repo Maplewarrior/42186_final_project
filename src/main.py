@@ -133,7 +133,7 @@ if __name__ == '__main__':
 
         uid = uuid.uuid4()
         weight_filename = f'weights/{args.model_type}_weights_{uid}.pt'
-
+        
         ### train model
         print("Starting training!")
         if args.wandb:
@@ -203,13 +203,15 @@ if __name__ == '__main__':
         model.eval()
         for i in range(n_batches):
             with torch.no_grad():
-                class2idx = metadata.types_dict
-                if (args.class_cond != None) and (args.class_cond in class2idx.keys()):
-                    y = torch.zeros((batch_size, CFG['data']['n_classes']), device=model.device)
-                    y[:, class2idx[args.class_cond]] = 1
-                else:
-                    print("Sampling DDPM unconditionally!")
-                    y = None
+                y = None
+                if args.model_type == 'DDPM':
+                    class2idx = metadata.types_dict
+                    if (args.class_cond != None) and (args.class_cond in class2idx.keys()):
+                        y = torch.zeros((batch_size, CFG['data']['n_classes']), device=model.device)
+                        y[:, class2idx[args.class_cond]] = 1
+                    elif i == 0:
+                        print("Sampling DDPM unconditionally!")
+                        
 
                 samples = model.sample(n_samples=batch_size, y=y)
 
@@ -220,7 +222,7 @@ if __name__ == '__main__':
             os.makedirs(f'samples/{args.model_type}/{uid}/', exist_ok=True)
             torch.save(samples, f'samples/{args.model_type}/{uid}/{batch_size}_samples_{i}.pt')
 
-    if args.mode == "sample-cond":
+    if args.mode == "sample-cond": # samples DDPM conditionally using empirical distribution of classes
         metadata = PokemonMetaData(types_path='data/types.csv')
         model = build_model(args.model_type, CFG, device, vae_prior_type=args.vae_prior)
 
@@ -262,14 +264,15 @@ if __name__ == '__main__':
                 model.eval()
                 for i in tqdm(range(n_batches), desc=f"Processing {type} batches"):
                     with torch.no_grad():
-                        class2idx = metadata.types_dict
-                        if (type != None) and (type in class2idx.keys()):
-                            y = torch.zeros((batch_size, CFG['data']['n_classes']), device=model.device)
-                            y[:, class2idx[type]] = 1
-                        else:
-                            print("Sampling DDPM unconditionally!")
-                            y = None
-                        samples = model.sample(n_samples=batch_size, y=y)
+                        if args.model_type == 'DDPM':
+                            class2idx = metadata.types_dict
+                            if (type != None) and (type in class2idx.keys()):
+                                y = torch.zeros((batch_size, CFG['data']['n_classes']), device=model.device)
+                                y[:, class2idx[type]] = 1
+                            else:
+                                print("Sampling DDPM unconditionally!")
+                                y = None
+                            samples = model.sample(n_samples=batch_size, y=y)
 
                     if args.model_type == 'DDPM':
                         samples = denormalize(samples)
