@@ -177,3 +177,4 @@ VAE_samples
 samples/
 samples_cond/
 weights/
+figures/
